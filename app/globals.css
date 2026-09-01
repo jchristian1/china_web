@@ -255,6 +255,15 @@ main { min-height: 70vh; }
 .hotel-tools > div { display: flex; gap: 5px; align-items: center; color: var(--muted); font-size: 11px; margin-right: 5px; }
 .hotel-tools button, .booking-filters button { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 7px 11px; color: var(--muted); font-size: 10px; cursor: pointer; }
 .hotel-tools button.is-active, .booking-filters button.is-active { border-color: var(--forest); background: var(--forest); color: white; }
+.hotel-tools.expanded { display: grid; grid-template-columns: minmax(210px, 1fr) auto 170px; padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--cream); }
+.hotel-tools.expanded .search-box { height: 38px; margin: 0; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.hotel-tools.expanded .search-box input { width: 100%; border: 0; outline: 0; background: transparent; }
+.hotel-tools.expanded select { height: 38px; border: 1px solid var(--line); border-radius: 8px; background: white; padding: 0 8px; color: var(--ink); }
+.tier-buttons { flex-wrap: wrap; }
+.hotel-rate-note { display: flex; align-items: center; gap: 9px; margin: -12px 0 20px; padding: 10px 12px; border-radius: 8px; background: var(--sage); color: var(--forest); font-size: 10px; }
+.hotel-rate-note svg { flex: 0 0 auto; }
+.date-alert { display: flex; align-items: start; gap: 7px; margin: 10px 0; padding: 9px 10px; border: 1px solid #e8c989; border-radius: 8px; background: #fff1d8; color: #74521b; font-size: 9px; line-height: 1.4; }
+.date-alert svg { flex: 0 0 auto; width: 14px; }
 .hotel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .hotel-tier { position: absolute; left: 12px; top: 12px; }
 .photo-credit { position: absolute; right: 10px; bottom: 10px; padding: 4px 6px; border-radius: 5px; background: rgba(0,0,0,.58); color: white; font-size: 8px; text-decoration: none; }
@@ -309,6 +318,18 @@ main { min-height: 70vh; }
 .builder-grid label > span { font-size: 11px; font-weight: 700; }
 .builder-grid small { display: block; color: var(--muted); font-size: 8px; font-weight: 400; margin-top: 2px; }
 .builder-grid select { min-width: 0; width: 100%; }
+.night-editor { display: grid; gap: 14px; }
+.night-city-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.night-city-grid article { display: grid; padding: 13px; border-radius: 9px; background: var(--forest); color: white; }
+.night-city-grid span { color: rgba(255,255,255,.68); font-size: 9px; text-transform: uppercase; }
+.night-city-grid strong { color: #f0cf92; font-family: Georgia, serif; font-size: 31px; }
+.night-city-grid small { color: rgba(255,255,255,.65); font-size: 8px; line-height: 1.4; }
+.night-move { display: grid; grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr) auto; gap: 9px; align-items: center; padding: 13px; border-radius: 9px; background: #f0ebe2; }
+.night-move p { grid-column: 1 / -1; display: flex; gap: 6px; margin: 0 0 3px; color: var(--muted); font-size: 9px; line-height: 1.4; }
+.night-move p svg { flex: 0 0 auto; width: 14px; color: var(--red); }
+.night-move > svg { color: var(--gold); }
+.night-move select { min-width: 0; height: 38px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; background: white; }
+.night-move button { height: 38px; padding: 0 13px; border: 0; border-radius: 7px; background: var(--red); color: white; font-size: 10px; font-weight: 700; cursor: pointer; }
 .builder-attraction-city { padding: 13px 0; border-bottom: 1px solid var(--line); }
 .builder-attraction-city:last-child { border-bottom: 0; }
 .builder-attraction-city h3 { margin: 0 0 8px; font-family: Georgia, serif; }
@@ -401,6 +422,22 @@ main { min-height: 70vh; }
 .shopping-timeline strong { font-family: Georgia, serif; }
 .shopping-timeline small { color: var(--muted); font-size: 9px; }
 .shopping-timeline svg { color: var(--gold); }
+.shopping-directory { margin-top: 34px; }
+.shopping-filters { display: grid; grid-template-columns: minmax(240px, 1fr) 210px; gap: 10px; margin: 14px 0; }
+.shopping-filters .search-box { display: flex; align-items: center; gap: 7px; min-width: 0; height: 40px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.shopping-filters input { width: 100%; border: 0; outline: 0; background: transparent; }
+.shopping-filters select { border: 1px solid var(--line); border-radius: 8px; padding: 0 10px; background: white; }
+.shopping-place-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.shopping-place-grid article { display: flex; flex-direction: column; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--cream); box-shadow: var(--shadow-soft); }
+.shopping-place-grid header { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+.shopping-place-grid header small { color: var(--red); font-size: 8px; text-transform: uppercase; }
+.shopping-place-grid h3 { margin: 2px 0 0; font-family: Georgia, serif; font-size: 22px; font-weight: 500; }
+.shopping-place-grid article > strong { margin: 10px 0; color: var(--forest); font-size: 10px; }
+.shopping-place-grid dl { display: grid; gap: 8px; margin: 0 0 13px; }
+.shopping-place-grid dl > div { display: grid; grid-template-columns: 78px 1fr; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.shopping-place-grid dt { color: var(--red); font-size: 8px; font-weight: 800; text-transform: uppercase; }
+.shopping-place-grid dd { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.45; }
+.shopping-place-grid .source-link { margin-top: auto; }
 
 .luggage-dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; }
 .luggage-dashboard > div { display: grid; grid-template-columns: auto 1fr; gap: 4px 9px; padding: 18px; background: var(--forest); color: white; border-radius: 12px; }
@@ -494,14 +531,20 @@ main { min-height: 70vh; }
   .city-tabs button { border-bottom: 1px solid var(--line); }
   .hotel-tools { overflow-x: auto; padding-bottom: 3px; }
   .hotel-tools button { flex: 0 0 auto; }
+  .hotel-tools.expanded { display: grid; grid-template-columns: 1fr; overflow: visible; }
+  .tier-buttons { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 3px; }
   .builder-total { top: 0; }
   .builder-grid { grid-template-columns: 1fr; }
+  .night-city-grid { grid-template-columns: repeat(3, 1fr); }
+  .night-move { grid-template-columns: 1fr auto 1fr; }
+  .night-move button { grid-column: 1 / -1; }
   .builder-attraction-city > div, .range-grid { grid-template-columns: 1fr; }
   .budget-layout, .selected-summary { grid-template-columns: 1fr; }
   .budget-row { grid-template-columns: auto 125px 1fr 65px; }
   .summary-hero { grid-template-columns: 1fr; }
   .summary-status { grid-template-columns: 1fr 1fr; }
   .shopping-grid { grid-template-columns: 1fr; }
+  .shopping-place-grid { grid-template-columns: 1fr; }
   .shopping-timeline > div { display: grid; grid-template-columns: 1fr; }
   .shopping-timeline > div > svg { transform: rotate(90deg); justify-self: center; }
   .luggage-dashboard, .rules-grid { grid-template-columns: repeat(2, 1fr); }
@@ -548,6 +591,10 @@ main { min-height: 70vh; }
   .builder-total { position: static; display: grid; }
   .builder-total > div { flex-wrap: wrap; }
   .builder-grid label { grid-template-columns: 1fr; }
+  .night-city-grid { grid-template-columns: repeat(2, 1fr); }
+  .night-move { grid-template-columns: 1fr; }
+  .night-move > svg { transform: rotate(90deg); justify-self: center; }
+  .night-move button { grid-column: auto; }
   .summary-hero { padding: 22px; }
   .summary-status { grid-template-columns: 1fr; }
   .budget-row { grid-template-columns: auto 1fr auto; }
@@ -557,6 +604,7 @@ main { min-height: 70vh; }
   .shopping-weight { grid-template-columns: auto 1fr; }
   .shopping-weight > div { border-right: 0; }
   .shopping-weight > p { grid-column: 1 / -1; }
+  .shopping-filters { grid-template-columns: 1fr; }
   .luggage-dashboard, .rules-grid { grid-template-columns: 1fr; }
   .pros-cons { grid-template-columns: 1fr; }
 }

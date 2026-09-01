@@ -21,10 +21,10 @@ after(async () => {
 
 const data = await vite.ssrLoadModule("/lib/trip-data.ts");
 
-test("offers at least five real hotel choices in every destination", () => {
+test("offers at least fifteen real hotel choices in every destination", () => {
   for (const city of data.cities) {
     const options = data.hotels.filter((hotel) => hotel.city === city.id);
-    assert.ok(options.length >= 5, `${city.name} only has ${options.length} hotels`);
+    assert.ok(options.length >= 15, `${city.name} only has ${options.length} hotels`);
     assert.equal(new Set(options.map((hotel) => hotel.id)).size, options.length);
   }
 });
