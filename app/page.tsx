@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  AlertTriangle, ArrowRight, BadgeCheck, BedDouble, BookOpenCheck,
+  AlertTriangle, ArrowRight, BadgeCheck, BedDouble, BookOpenCheck, ChevronLeft, ChevronRight,
   BriefcaseBusiness, Bus, CalendarDays, Check, CircleDollarSign, Clock3,
   ExternalLink, Filter, Hotel, Info, Luggage, Map, MapPin, Menu, Minus,
   PackageCheck, Plane, Plus, RotateCcw, Search, Settings2, Ship, ShoppingBag,
@@ -16,6 +16,18 @@ import {
 } from "@/lib/trip-data";
 
 type PageId = "inicio" | "itinerario" | "atracciones" | "transporte" | "hoteles" | "paquetes" | "arma" | "resumen" | "reservas" | "compras" | "equipaje";
+
+interface SavedCustomTrip {
+  stayNights: Record<CityId, number>;
+  hotelIds: Record<CityId, string>;
+  transportIds: Record<string, string>;
+  localIds: Record<CityId, string>;
+  attractionIds: string[];
+  dayPlans: Record<CityId, string[][]>;
+  foodPerPersonDay: number;
+  baggageReserve: number;
+  shoppingWeightKg: number;
+}
 
 interface PlannerState {
   stayNights: Record<CityId, number>;
@@ -32,6 +44,7 @@ interface PlannerState {
   other: number;
   shoppingWeightKg: number;
   bookingStates: Record<string, BookingState>;
+  savedCustomTrip: SavedCustomTrip | null;
 }
 
 interface BookingRow {
@@ -45,7 +58,7 @@ interface BookingRow {
   note: string;
 }
 
-const STORAGE_KEY = "china-familia-2026-v5";
+const STORAGE_KEY = "china-familia-2026-v7";
 
 const navItems: Array<{ id: PageId; label: string; short: string; icon: typeof Map }> = [
   { id: "inicio", label: "Inicio", short: "Inicio", icon: Map },
@@ -76,6 +89,7 @@ const initialState = (): PlannerState => ({
   other: 0,
   shoppingWeightKg: 25,
   bookingStates: { "intl-flight": "RESERVADO" },
+  savedCustomTrip: null,
 });
 
 const usd = new Intl.NumberFormat("es-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -114,11 +128,11 @@ type TimelineEvent = { time: string; title: string; note?: string; critical?: bo
 
 const travelEventsByOption: Record<string, TimelineEvent[]> = {
   "sh-zjj-flight": [
-    { time: "07:15", title: "Check-out y traslado a PVG", note: "Hora de planificación basada en el patrón actual; ajustar cuando el billete 2026 esté emitido." },
-    { time: "08:15", title: "Facturación, seguridad y 5 maletas" },
-    { time: "10:15", title: "FM7225 PVG→DYG", note: "Patrón actual; el horario para la fecha elegida todavía no está confirmado.", critical: true },
-    { time: "12:25", title: "Llegada patrón a DYG + recogida" },
-    { time: "14:30", title: "Traslado y check-in en Wulingyuan" },
+    { time: "≈06:30", title: "Check-out y traslado al aeropuerto", note: "Elegir una salida matutina real; ajustar cuando se emita el billete." },
+    { time: "≈08:00", title: "Facturación, seguridad y 5 maletas" },
+    { time: "≈10:00", title: "Vuelo directo Shanghái→DYG", note: "Ventana recomendada, no número de vuelo confirmado.", critical: true },
+    { time: "≈12:30", title: "Llegada a DYG + recogida" },
+    { time: "≈14:30", title: "Traslado y check-in en Wulingyuan" },
     { time: "18:00", title: "Cena de Hunan + preparar capas" },
   ],
   "sh-zjj-train": [
@@ -127,59 +141,53 @@ const travelEventsByOption: Record<string, TimelineEvent[]> = {
     { time: "≈17:00", title: "Ventana estimada de llegada y check-in", note: "No fijar una actividad con entrada esa tarde hasta tener el billete." },
     { time: "≈19:00", title: "Cena cerca del hotel" },
   ],
-  "zjj-sz-flight": [
-    { time: "08:00", title: "Desayuno, check-out y guardar equipaje" },
-    { time: "13:00", title: "Almuerzo + recoger las 5 maletas" },
-    { time: "16:30", title: "Van Wulingyuan→DYG", note: "Margen de planificación; confirmar recogida al emitir el billete." },
-    { time: "17:30", title: "Facturación y seguridad" },
-    { time: "19:40", title: "Y87574 DYG→SZX", note: "Patrón mié/vie/dom actual; comprobar que opere en la nueva fecha antes de reservar.", critical: true },
-    { time: "21:45", title: "Llegada patrón a SZX + equipaje" },
-    { time: "23:15", title: "Check-in en Shenzhen" },
+  "zjj-hk-train": [
+    { time: "11:45", title: "Check-out y van Wulingyuan→Zhangjiajie West", note: "Dejar margen para tráfico, pasaportes y las 5 maletas." },
+    { time: "14:10", title: "Control y embarque ferroviario" },
+    { time: "≈15:10", title: "HSR directo Zhangjiajie West→West Kowloon", note: "Patrón actual; el tren exacto del 2 dic todavía no está a la venta.", critical: true },
+    { time: "≈21:51", title: "Llegada a Hong Kong + controles" },
+    { time: "≈22:45", title: "Check-in tardío en Hong Kong" },
   ],
-  "zjj-sz-train": [
-    { time: "≈06:00", title: "Bloquear el día para llegar a Zhangjiajie West", note: "12306 aún no publica salida ni número de tren.", critical: true },
-    { time: "≈08:00", title: "HSR Zhangjiajie West→Shenzhen North", note: "Duración ferroviaria actual desde 6 h 20; no reservar una actividad matutina." },
-    { time: "≈18:00", title: "Ventana estimada de llegada a Shenzhen", note: "La hora final dependerá del tren disponible y del traslado al hotel." },
+  "zjj-hk-flight": [
+    { time: "Confirmar", title: "Vuelo DYG→HKG no publicado para diciembre", note: "Greater Bay Airlines no muestra resultados para noviembre; no bloquear una hora hasta que exista inventario.", critical: true },
   ],
-  "sz-mo-ferry": [
-    { time: "07:00", title: "Check-out y traslado a Shekou" },
-    { time: "08:00", title: "Facturación, inmigración y equipaje" },
-    { time: "09:00", title: "Shekou→Macao Outer Harbour", note: "Salida del horario vigente; reconfirmar venta para la fecha recalculada.", critical: true },
-    { time: "≈10:30", title: "Ventana estimada de llegada al hotel", note: "Incluye inmigración y recogida de equipaje." },
-    { time: "13:30", title: "Almuerzo macaense" },
+  "hk-mo-ferry": [
+    { time: "08:00", title: "Desayuno, check-out y consigna" },
+    { time: "14:15", title: "Recoger equipaje y llegar a Sheung Wan" },
+    { time: "14:45", title: "Facturar las 5 maletas" },
+    { time: "≈15:30", title: "TurboJET Sheung Wan→Outer Harbour", note: "Salida del horario vigente; reconfirmar el 5 dic.", critical: true },
+    { time: "≈18:00", title: "Check-in y cena en Macao" },
   ],
-  "sz-mo-train": [
-    { time: "≈06:30", title: "Salida hacia Shenzhen North", note: "Horario exacto pendiente de 12306.", critical: true },
-    { time: "≈08:00", title: "HSR vía Guangzhou South + Zhuhai", note: "No existe un billete directo único; habrá transbordo y cruce en Gongbei." },
-    { time: "≈13:00", title: "Ventana estimada de llegada a Macao", note: "No reservar una entrada antes de las 14:00 hasta tener los trenes." },
+  "hk-mo-bus": [
+    { time: "13:00", title: "Check-out y traslado al puerto HZMB de Hong Kong" },
+    { time: "≈14:30", title: "Bus HZMB + controles fronterizos", note: "Servicio 24 h; mover las 5 maletas en inmigración." },
+    { time: "≈17:30", title: "Llegada al hotel en Macao" },
   ],
-  "mo-hk-turbo": [
-    { time: "08:30", title: "Desayuno, check-out y consigna" },
-    { time: "≈13:30", title: "Ventana de ferry Outer Harbour→Sheung Wan", note: "Elegir salida con al menos 75 min desde la actividad matutina; horario definitivo por confirmar.", critical: true },
-    { time: "17:30", title: "Check-in y cena temprana en Kowloon" },
+  "mo-sz-ferry": [
+    { time: "08:00", title: "Desayuno, check-out y consigna" },
+    { time: "09:00", title: "Bloque corto de patrimonio o Cotai" },
+    { time: "16:30", title: "Recoger equipaje y llegar a Outer Harbour" },
+    { time: "17:15", title: "Documentos y facturación de 5 maletas" },
+    { time: "18:00", title: "Ferry Outer Harbour→Shekou", note: "Horario vigente desde 5 sep; confirmar venta del 6 dic.", critical: true },
+    { time: "≈20:30", title: "Check-in en Shenzhen" },
   ],
-  "mo-hk-cotai": [
-    { time: "08:30", title: "Desayuno, check-out y consigna" },
-    { time: "≈13:30", title: "Ventana de ferry Taipa→Sheung Wan", note: "Con teamLab, elegir una salida posterior y reservar las 5 maletas el día anterior.", critical: true },
-    { time: "17:30", title: "Check-in y cena temprana en Kowloon" },
+  "mo-sz-train": [
+    { time: "≈11:00", title: "Salida hacia Gongbei", note: "Ventana estimada hasta que 12306 publique conexiones." },
+    { time: "≈13:00", title: "Cruce fronterizo + Zhuhai→Guangzhou South→Shenzhen North", note: "No existe un billete directo único; requiere transbordo.", critical: true },
+    { time: "≈18:30", title: "Llegada estimada al hotel en Shenzhen" },
   ],
-  "mo-hk-bus": [
-    { time: "08:30", title: "Desayuno, check-out y consigna" },
-    { time: "≈13:30", title: "Salida flexible hacia el puerto HZMB", note: "Cruce operativo 24 h; sumar taxis/metro en ambos extremos." },
-    { time: "17:30", title: "Check-in y cena temprana en Kowloon" },
-  ],
-  "hk-sh-flight": [
-    { time: "06:15", title: "Check-out con 5 maletas" },
-    { time: "07:15", title: "Llegada a HKG, facturación y seguridad" },
-    { time: "09:45", title: "MU724 HKG→PVG", note: "Patrón actual; no hay horario confirmado para la fecha recalculada.", critical: true },
-    { time: "12:25", title: "Llegada patrón a PVG + equipaje" },
-    { time: "14:30", title: "Check-in final en Shanghái" },
+  "sz-sh-flight": [
+    { time: "06:30", title: "Check-out con 5 maletas y compras" },
+    { time: "07:30", title: "Llegada a SZX, facturación y seguridad" },
+    { time: "≈09:30", title: "Vuelo directo SZX→SHA preferido", note: "Elegir el vuelo real del 9 dic dentro de la ventana 08:00–10:30.", critical: true },
+    { time: "≈12:00", title: "Llegada a Hongqiao + equipaje" },
+    { time: "≈13:30", title: "Check-in final en Shanghái" },
     { time: "18:30", title: "Cena de despedida" },
   ],
-  "hk-sh-train": [
-    { time: "≈09:00", title: "Bloquear el día para West Kowloon", note: "12306 todavía no publica el servicio del 9 dic.", critical: true },
-    { time: "≈11:00", title: "HSR West Kowloon→Shanghai Hongqiao", note: "Ventana estimada, no horario: el servicio actual tarda unas 8 h 08." },
-    { time: "≈21:00", title: "Llegada nocturna estimada y check-in", note: "No añadir Yu Garden ni otra entrada esa tarde." },
+  "sz-sh-train": [
+    { time: "≈06:00", title: "Salida hacia Shenzhen North", note: "12306 todavía no vende el 9 dic.", critical: true },
+    { time: "≈07:30", title: "HSR Shenzhen North→Shanghai Hongqiao", note: "El servicio más rápido actual tarda unas 6 h 34; la hora exacta puede cambiar." },
+    { time: "≈16:00", title: "Ventana estimada de check-in en Shanghái" },
   ],
 };
 
@@ -217,9 +225,8 @@ function attractionDateAlert(itemId: string, date: string) {
 }
 
 function transportDateAlert(optionId: string, date: string) {
-  if (optionId !== "zjj-sz-flight") return "";
-  const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
-  return [0, 3, 5].includes(weekday) ? "" : "La nueva fecha no coincide con el patrón mié/vie/dom observado. No dependas de este vuelo sin una frecuencia nueva.";
+  if (optionId === "zjj-hk-flight" && date >= "2026-11-01") return "Greater Bay Airlines no muestra resultados para noviembre de 2026. Mantén esta opción en espera hasta que aparezca inventario oficial.";
+  return "";
 }
 
 const iso = (date: Date) => date.toISOString().slice(0, 10);
@@ -261,9 +268,9 @@ function buildDynamicSchedule(stayNights: Record<CityId, number>) {
 
   const cityBlocks: Array<{ city: CityId; segment: string; templates: string[]; extraTitle: string }> = [
     { city: "zhangjiajie", segment: "sh-zjj", templates: ["2026-11-28", "2026-11-29", "2026-11-30", "2026-12-01"], extraTitle: "Día flexible en Zhangjiajie" },
-    { city: "shenzhen", segment: "zjj-sz", templates: ["2026-12-02", "2026-12-03", "2026-12-04"], extraTitle: "Día adicional en Shenzhen" },
-    { city: "macau", segment: "sz-mo", templates: ["2026-12-05"], extraTitle: "Día adicional en Macao" },
-    { city: "hongkong", segment: "mo-hk", templates: ["2026-12-06", "2026-12-07", "2026-12-08"], extraTitle: "Día adicional en Hong Kong" },
+    { city: "hongkong", segment: "zjj-hk", templates: ["2026-12-02", "2026-12-03", "2026-12-04"], extraTitle: "Día adicional en Hong Kong" },
+    { city: "macau", segment: "hk-mo", templates: ["2026-12-05"], extraTitle: "Día adicional en Macao" },
+    { city: "shenzhen", segment: "mo-sz", templates: ["2026-12-06", "2026-12-07", "2026-12-08"], extraTitle: "Día adicional en Shenzhen" },
   ];
   for (const block of cityBlocks) {
     for (let index = 0; index < stayNights[block.city]; index += 1) {
@@ -272,7 +279,7 @@ function buildDynamicSchedule(stayNights: Record<CityId, number>) {
     }
   }
 
-  segmentDates["hk-sh"] = pushDay("shanghai", "2026-12-09", "Regreso final a Shanghái");
+  segmentDates["sz-sh"] = pushDay("shanghai", "2026-12-09", "Regreso final a Shanghái");
   const departureTemplate = template("2026-12-10");
   days.push({ ...departureTemplate, date: iso(cursor), label: dayLabel(cursor) });
 
@@ -289,16 +296,16 @@ function buildDynamicSchedule(stayNights: Record<CityId, number>) {
   const defaultAttractionDates: Record<CityId, string[]> = {
     shanghai: ["2026-11-25", "2026-11-26", "2026-11-27", "2026-12-09"],
     zhangjiajie: ["2026-11-29", "2026-11-30", "2026-12-01", "2026-12-02"],
-    shenzhen: ["2026-12-03", "2026-12-04"],
+    hongkong: ["2026-12-03", "2026-12-04", "2026-12-05"],
     macau: ["2026-12-05", "2026-12-06"],
-    hongkong: ["2026-12-06", "2026-12-07", "2026-12-08"],
+    shenzhen: ["2026-12-07", "2026-12-08", "2026-12-09"],
   };
   const attractionCandidates: Record<CityId, string[]> = {
     shanghai: cityDates.shanghai,
-    zhangjiajie: [...cityDates.zhangjiajie.slice(1), segmentDates["zjj-sz"]].filter(Boolean),
+    zhangjiajie: cityDates.zhangjiajie.slice(1).length ? cityDates.zhangjiajie.slice(1) : cityDates.zhangjiajie,
+    hongkong: cityDates.hongkong.slice(1).length ? cityDates.hongkong.slice(1) : cityDates.hongkong,
+    macau: [...cityDates.macau, segmentDates["mo-sz"]].filter(Boolean),
     shenzhen: cityDates.shenzhen.slice(1).length ? cityDates.shenzhen.slice(1) : cityDates.shenzhen,
-    macau: [...cityDates.macau, segmentDates["mo-hk"]].filter(Boolean),
-    hongkong: cityDates.hongkong,
   };
   const attractionDates = Object.fromEntries(attractions.map((item) => {
     const originalIndex = Math.max(0, defaultAttractionDates[item.city].indexOf(item.day));
@@ -362,14 +369,19 @@ function PageHeader({ eyebrow, title, text }: { eyebrow: string; title: string; 
 
 function DetailModal({ title, images, onClose, children }: { title: string; images: string[]; onClose: () => void; children: React.ReactNode }) {
   const [activeImage, setActiveImage] = useState(0);
-  useEffect(() => {
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
-    document.addEventListener("keydown", close);
-    document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", close); document.body.style.overflow = ""; };
-  }, [onClose]);
   const safeImages = Array.from(new Set(images));
-  return <div className="detail-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}><section className="detail-modal" role="dialog" aria-modal="true" aria-label={title}><button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar detalle"><X /></button><div className="detail-gallery"><img src={safeImages[activeImage]} alt={`${title} · foto ${activeImage + 1}`} /><div>{safeImages.map((image, index) => <button type="button" key={`${image}-${index}`} className={index === activeImage ? "is-active" : ""} onClick={() => setActiveImage(index)}><img src={image} alt={`Ver foto ${index + 1}`} /></button>)}</div><span>{activeImage + 1}/{safeImages.length} fotos</span></div><div className="detail-content"><span className="eyebrow">Ficha práctica</span><h2>{title}</h2>{children}</div></section></div>;
+  const moveImage = (direction: number) => setActiveImage((current) => (current + direction + safeImages.length) % safeImages.length);
+  useEffect(() => {
+    const keyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+      if (safeImages.length > 1 && event.key === "ArrowLeft") setActiveImage((current) => (current - 1 + safeImages.length) % safeImages.length);
+      if (safeImages.length > 1 && event.key === "ArrowRight") setActiveImage((current) => (current + 1) % safeImages.length);
+    };
+    document.addEventListener("keydown", keyboard);
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", keyboard); document.body.style.overflow = ""; };
+  }, [onClose, safeImages.length]);
+  return <div className="detail-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}><section className="detail-modal" role="dialog" aria-modal="true" aria-label={title}><button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar detalle"><X /></button><div className="detail-gallery"><img src={safeImages[activeImage]} alt={`${title} · foto ${activeImage + 1}`} />{safeImages.length > 1 && <><button type="button" className="gallery-arrow gallery-previous" onClick={() => moveImage(-1)} aria-label="Foto anterior"><ChevronLeft /></button><button type="button" className="gallery-arrow gallery-next" onClick={() => moveImage(1)} aria-label="Foto siguiente"><ChevronRight /></button></>}<div>{safeImages.map((image, index) => <button type="button" key={`${image}-${index}`} className={index === activeImage ? "is-active" : ""} onClick={() => setActiveImage(index)} aria-label={`Ver foto ${index + 1}`}><img src={image} alt="" /></button>)}</div><span>{activeImage + 1}/{safeImages.length} {safeImages.length === 1 ? "foto verificada" : "fotos"}</span></div><div className="detail-content"><span className="eyebrow">Ficha práctica</span><h2>{title}</h2>{children}</div></section></div>;
 }
 
 function Metric({ label, value, note, icon: Icon }: { label: string; value: string; note: string; icon: typeof Map }) {
@@ -379,6 +391,14 @@ function Metric({ label, value, note, icon: Icon }: { label: string; value: stri
 function ProgressBar({ value, max }: { value: number; max: number }) {
   const percentage = max ? Math.min(100, (value / max) * 100) : 0;
   return <span className="mini-progress" aria-label={`${value} de ${max}`}><i style={{ width: `${percentage}%` }} /></span>;
+}
+
+function compatibleTransportIds(candidate?: Record<string, string>) {
+  return Object.fromEntries(transportSegments.map((segment) => {
+    const selected = candidate?.[segment.id];
+    const valid = segment.options.some((option) => option.id === selected);
+    return [segment.id, valid ? selected : defaultPackage.transportIds[segment.id]];
+  })) as Record<string, string>;
 }
 
 export default function Home() {
@@ -391,12 +411,15 @@ export default function Home() {
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY)
+        ?? window.localStorage.getItem("china-familia-2026-v6")
+        ?? window.localStorage.getItem("china-familia-2026-v5")
         ?? window.localStorage.getItem("china-familia-2026-v4")
         ?? window.localStorage.getItem("china-familia-2026-v3")
         ?? window.localStorage.getItem("china-familia-2026-v2");
       if (stored) {
         const parsed = JSON.parse(stored);
-        setState({ ...initialState(), ...parsed, dayPlans: { ...initialState().dayPlans, ...(parsed.dayPlans ?? {}) } });
+        const savedCustomTrip = parsed.savedCustomTrip ? { ...parsed.savedCustomTrip, transportIds: compatibleTransportIds(parsed.savedCustomTrip.transportIds) } : null;
+        setState({ ...initialState(), ...parsed, transportIds: compatibleTransportIds(parsed.transportIds), dayPlans: { ...initialState().dayPlans, ...(parsed.dayPlans ?? {}) }, savedCustomTrip });
       }
       const hash = window.location.hash.replace("#", "") as PageId;
       if (navItems.some((item) => item.id === hash)) setPage(hash);
@@ -437,7 +460,7 @@ export default function Home() {
       const groupNight = shanghaiHotel.total / DEFAULT_NIGHTS.shanghai;
       rows.push(
         { key: "hotel-shanghai-1", type: "Hotel", date: `${shortDate(schedule.cityDates.shanghai[0])} · ${firstNights}n`, name: `${shanghaiHotel.name} · primera estancia`, cost: round(groupNight * firstNights), link: shanghaiHotel.bookingUrl, initialState: "LISTO", note: `${firstNights} noches · configuración para 5` },
-        { key: "hotel-shanghai-2", type: "Hotel", date: `${shortDate(schedule.segmentDates["hk-sh"])} · 1n`, name: `${shanghaiHotel.name} · noche final`, cost: round(groupNight), link: shanghaiHotel.bookingUrl, initialState: "LISTO", note: "Reserva separada · 1 noche" },
+        { key: "hotel-shanghai-2", type: "Hotel", date: `${shortDate(schedule.segmentDates["sz-sh"])} · 1n`, name: `${shanghaiHotel.name} · noche final`, cost: round(groupNight), link: shanghaiHotel.bookingUrl, initialState: "LISTO", note: "Reserva separada · 1 noche" },
       );
     }
     cities.filter((city) => city.id !== "shanghai").forEach((city) => {
@@ -462,8 +485,34 @@ export default function Home() {
   const go = (next: PageId) => { setPage(next); setMenuOpen(false); };
 
   const applyPackage = (preset: PackagePreset) => {
-    setState((current) => ({ ...current, hotelIds: { ...preset.hotelIds }, transportIds: { ...preset.transportIds }, localIds: { ...preset.localIds }, attractionIds: [...preset.attractionIds], dayPlans: autoDayPlans(preset.attractionIds, current.stayNights), foodPerPersonDay: preset.foodPerPersonDay, baggageReserve: preset.baggageReserve, bookingStates: { "intl-flight": current.bookingStates["intl-flight"] ?? "RESERVADO" } }));
+    setState((current) => ({ ...current, stayNights: { ...DEFAULT_NIGHTS }, hotelIds: { ...preset.hotelIds }, transportIds: { ...preset.transportIds }, localIds: { ...preset.localIds }, attractionIds: [...preset.attractionIds], dayPlans: autoDayPlans(preset.attractionIds, DEFAULT_NIGHTS), foodPerPersonDay: preset.foodPerPersonDay, baggageReserve: preset.baggageReserve, bookingStates: { "intl-flight": current.bookingStates["intl-flight"] ?? "RESERVADO" } }));
     setNotice(`Paquete ${preset.name} aplicado. Puedes cambiar cualquier elección.`);
+  };
+
+  const saveCustomTrip = () => {
+    setState((current) => ({
+      ...current,
+      savedCustomTrip: {
+        stayNights: { ...current.stayNights }, hotelIds: { ...current.hotelIds }, transportIds: { ...current.transportIds },
+        localIds: { ...current.localIds }, attractionIds: [...current.attractionIds],
+        dayPlans: Object.fromEntries(Object.entries(current.dayPlans).map(([city, days]) => [city, days.map((day) => [...day])])) as Record<CityId, string[][]>,
+        foodPerPersonDay: current.foodPerPersonDay, baggageReserve: current.baggageReserve, shoppingWeightKg: current.shoppingWeightKg,
+      },
+    }));
+    setNotice("Tu viaje personalizado quedó guardado en Paquetes.");
+  };
+
+  const applyCustomTrip = () => {
+    setState((current) => current.savedCustomTrip ? {
+      ...current,
+      ...current.savedCustomTrip,
+      stayNights: { ...current.savedCustomTrip.stayNights }, hotelIds: { ...current.savedCustomTrip.hotelIds },
+      transportIds: { ...current.savedCustomTrip.transportIds }, localIds: { ...current.savedCustomTrip.localIds },
+      attractionIds: [...current.savedCustomTrip.attractionIds],
+      dayPlans: Object.fromEntries(Object.entries(current.savedCustomTrip.dayPlans).map(([city, days]) => [city, days.map((day) => [...day])])) as Record<CityId, string[][]>,
+      bookingStates: { "intl-flight": current.bookingStates["intl-flight"] ?? "RESERVADO" },
+    } : current);
+    setNotice("Viaje personalizado aplicado.");
   };
 
   const toggleAttraction = (id: string) => setState((current) => {
@@ -496,8 +545,8 @@ export default function Home() {
         {page === "atracciones" && <AttractionsPage {...common} />}
         {page === "transporte" && <TransportPage {...common} />}
         {page === "hoteles" && <HotelsPage {...common} />}
-        {page === "paquetes" && <PackagesPage {...common} applyPackage={applyPackage} />}
-        {page === "arma" && <BuilderPage {...common} />}
+        {page === "paquetes" && <PackagesPage {...common} applyPackage={applyPackage} saveCustomTrip={saveCustomTrip} applyCustomTrip={applyCustomTrip} />}
+        {page === "arma" && <BuilderPage {...common} saveCustomTrip={saveCustomTrip} />}
         {page === "resumen" && <SummaryPage {...common} hasIntlPrice={hasIntlPrice} />}
         {page === "reservas" && <BookingsPage {...common} />}
         {page === "compras" && <ShoppingPage {...common} />}
@@ -530,14 +579,14 @@ type CommonProps = {
 function Dashboard({ state, go, total, baseCosts, bookingRows, bookedCount, waitingCount, hasIntlPrice, reset }: CommonProps & { hasIntlPrice: boolean; reset: () => void }) {
   const selectedHotelNames = cities.map((city) => hotels.find((hotel) => hotel.id === state.hotelIds[city.id])?.name).filter(Boolean);
   return <>
-    <section className="hero"><img src="/attractions/zjj-tianzi.webp" alt="Pilares de arenisca de Zhangjiajie" /><div className="hero-shade" /><div className="hero-content"><span className="eyebrow light">24 noviembre — 10 diciembre 2026</span><h1>Decidir el viaje,<br />no solo mirarlo.</h1><p>Compara opciones reales para 5, elige una y ve al instante qué cambia en la ruta, el presupuesto y las compras pendientes.</p><div className="hero-actions"><button className="primary-button" type="button" onClick={() => go("arma")}>Armar nuestro viaje <ArrowRight size={18} /></button><button className="ghost-button" type="button" onClick={() => go("resumen")}>Ver total actual</button></div></div><div className="hero-facts"><div><strong>16</strong><span>días</span></div><div><strong>5</strong><span>viajeros</span></div><div><strong>5</strong><span>destinos</span></div><div><strong>15</strong><span>noches</span></div></div></section>
+    <section className="hero"><img src="/attractions/hero-china.webp" alt="Pilares de arenisca de Zhangjiajie entre nubes al amanecer" /><div className="hero-shade" /><div className="hero-content"><span className="eyebrow light">24 noviembre — 10 diciembre 2026</span><h1>Decidir el viaje,<br />no solo mirarlo.</h1><p>Compara opciones reales para 5, elige una y ve al instante qué cambia en la ruta, el presupuesto y las compras pendientes.</p><div className="hero-actions"><button className="primary-button" type="button" onClick={() => go("arma")}>Armar nuestro viaje <ArrowRight size={18} /></button><button className="ghost-button" type="button" onClick={() => go("resumen")}>Ver total actual</button></div></div><div className="hero-facts"><div><strong>16</strong><span>días</span></div><div><strong>5</strong><span>viajeros</span></div><div><strong>5</strong><span>destinos</span></div><div><strong>15</strong><span>noches</span></div></div></section>
     <section className="content-section dashboard-section">
       <div className="status-callout warning"><AlertTriangle size={21} /><div><strong>El plan es utilizable, pero no todo se puede comprar hoy.</strong><p>12306 todavía no publica los trenes de finales de noviembre/diciembre y varios ferries deben reconfirmarse. La app los marca como “Esperando horario” en vez de inventar servicios.</p></div><button type="button" onClick={() => go("reservas")}>Ver {waitingCount} pendientes</button></div>
       <div className="section-title-row"><div><span className="eyebrow">Panel de decisiones</span><h2>Así está el viaje ahora</h2></div><button type="button" className="quiet-button" onClick={reset}><RotateCcw size={15} /> Restablecer Premium</button></div>
       <div className="metrics-grid"><Metric icon={WalletCards} label={hasIntlPrice ? "Total para 5" : "Total parcial para 5"} value={money(total)} note={`${money(total / TRAVELERS)} por persona`} /><Metric icon={Hotel} label="Hoteles" value={money(baseCosts.hotelCost)} note="5 destinos · 6 reservas" /><Metric icon={TicketCheck} label="Experiencias" value={String(state.attractionIds.length)} note={`${money(baseCosts.attractionCost)} para 5`} /><Metric icon={BookOpenCheck} label="Compras completadas" value={`${bookedCount}/${bookingRows.length}`} note={`${waitingCount} esperan horario`} /></div>
       {!hasIntlPrice && <button type="button" className="missing-cost" onClick={() => go("resumen")}><Info size={18} /><span><strong>Falta el importe de los vuelos internacionales comprados.</strong> El total mostrado es parcial; añádelo para obtener el costo real final.</span><ArrowRight size={17} /></button>}
-      <div className="decision-grid"><article className="decision-card"><span className="card-icon"><Hotel /></span><div><small>Selección actual</small><h3>Hoteles</h3><p>{selectedHotelNames.join(" · ")}</p></div><button type="button" onClick={() => go("hoteles")}>Comparar</button></article><article className="decision-card"><span className="card-icon"><TrainFront /></span><div><small>5 tramos</small><h3>Transporte interurbano</h3><p>3 vuelos · 2 ferries en el punto de partida Premium.</p></div><button type="button" onClick={() => go("transporte")}>Comparar</button></article><article className="decision-card"><span className="card-icon"><Settings2 /></span><div><small>Todo mezclable</small><h3>Arma tu viaje</h3><p>Sube Macao, ahorra en Zhangjiajie o cambia un vuelo por tren.</p></div><button type="button" onClick={() => go("arma")}>Personalizar</button></article></div>
-      <div className="route-strip" aria-label="Ruta del viaje">{cities.map((city, index) => <div key={city.id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{city.name}</strong><small>{state.stayNights[city.id]} {state.stayNights[city.id] === 1 ? "noche" : "noches"}</small>{index < cities.length - 1 && <ArrowRight />}</div>)}</div>
+      <div className="decision-grid"><article className="decision-card"><span className="card-icon"><Hotel /></span><div><small>Selección actual</small><h3>Hoteles</h3><p>{selectedHotelNames.join(" · ")}</p></div><button type="button" onClick={() => go("hoteles")}>Comparar</button></article><article className="decision-card"><span className="card-icon"><TrainFront /></span><div><small>5 tramos</small><h3>Transporte interurbano</h3><p>2 vuelos · 1 tren directo · 2 ferries en el punto de partida Premium.</p></div><button type="button" onClick={() => go("transporte")}>Comparar</button></article><article className="decision-card"><span className="card-icon"><Settings2 /></span><div><small>Todo mezclable</small><h3>Arma tu viaje</h3><p>Sube Macao, ahorra en Zhangjiajie o cambia un vuelo por tren.</p></div><button type="button" onClick={() => go("arma")}>Personalizar</button></article></div>
+      <div className="route-strip" aria-label="Ruta del viaje">{cities.map((city, index) => <div key={city.id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{city.name}</strong><small>{state.stayNights[city.id]} {state.stayNights[city.id] === 1 ? "noche" : "noches"}</small><ArrowRight /></div>)}<div><span>06</span><strong>Shanghái</strong><small>Noche final</small></div></div>
     </section>
   </>;
 }
@@ -552,7 +601,9 @@ function ItineraryPage({ state, go, baseCosts, schedule }: CommonProps) {
     const transport = segment ? selectedTransportOption(segment.id, state.transportIds[segment.id]) : undefined;
     const dayCity = day.city === "transito" ? undefined : day.city as CityId;
     const hotel = dayCity ? hotels.find((item) => item.id === state.hotelIds[dayCity]) : undefined;
-    const travelConflict = (transport?.id === "zjj-sz-train" && dayAttractions.length > 0) || (transport?.id === "sz-mo-train" && dayAttractions.some((item) => item.time < "14:00")) || (transport?.id === "hk-sh-train" && dayAttractions.length > 0);
+    const travelConflict = (["hk-mo-ferry", "hk-mo-bus"].includes(transport?.id ?? "") && dayAttractions.some((item) => item.time < "19:00"))
+      || (transport?.id === "sz-sh-train" && dayAttractions.length > 0)
+      || (transport?.id === "sz-sh-flight" && dayAttractions.some((item) => item.time < "15:00"));
     const dateConflict = dayAttractions.some((item) => Boolean(attractionDateAlert(item.id, day.date))) || Boolean(transport && transportDateAlert(transport.id, day.date));
     const overloaded = duration > 8.5 || attractionsOverlap(dayAttractions) || travelConflict || dateConflict || (dayAttractions.some((item) => item.id === "sz-window") && dayAttractions.some((item) => item.id === "sz-science")) || (dayAttractions.filter((item) => ["hk-ngong", "hk-disney", "hk-mplus", "hk-ocean-park"].includes(item.id)).length > 1);
     const rawBaseEvents = transport ? travelEventsByOption[transport.id] ?? day.baseEvents : day.baseEvents;
@@ -597,11 +648,16 @@ function HotelsPage({ state, setState, schedule }: CommonProps) {
   })}</div>{!options.length && <div className="empty-state"><Hotel /><h3>No hay coincidencias</h3><p>Quita un filtro o busca otra zona.</p></div>}{detailId && (() => { const hotel = hotels.find((candidate) => candidate.id === detailId)!; const selected = state.hotelIds[hotel.city] === hotel.id; const stayTotal = hotelStayPrice(hotel, state.stayNights[hotel.city]); return <DetailModal title={hotel.name} images={hotel.images ?? [hotel.image]} onClose={() => setDetailId(null)}><div className="detail-meta"><span><MapPin />{hotel.area}</span><span><BedDouble />{hotel.tier}</span><span><CalendarDays />{state.stayNights[hotel.city]} noches</span></div><p className="detail-description">{hotel.description}</p><div className="detail-price"><div><small>Total para 5</small><strong>{money(stayTotal)}</strong></div><div><small>Por persona</small><strong>{money(stayTotal / TRAVELERS)}</strong></div></div><div className="room-config"><BedDouble /><span><strong>Habitaciones necesarias</strong>{hotel.roomConfig}</span></div><h3>Cerca de</h3><div className="amenities">{hotel.nearby?.map((item) => <span key={item}>{item}</span>)}</div><h3>Servicios principales</h3><div className="amenities">{hotel.amenities.map((item) => <span key={item}>{item}</span>)}</div><p className="detail-ticket"><Info />{hotel.priceNote}</p><div className="card-actions"><SelectButton selected={selected} label={selected ? "Hotel elegido" : "Elegir hotel"} onClick={() => setState((current) => ({ ...current, hotelIds: { ...current.hotelIds, [hotel.city]: hotel.id } }))} /><SourceLink href={hotel.bookingUrl} label="Ver fechas" /><SourceLink href={hotel.sourceUrl} label="Fuente" /></div></DetailModal>; })()}</section>;
 }
 
-function PackagesPage({ applyPackage, state }: CommonProps & { applyPackage: (preset: PackagePreset) => void }) {
-  return <section className="content-section"><PageHeader eyebrow="Cuatro formas reales de hacer la misma ruta" title="Paquetes que sí cambian la experiencia" text="Todos mantienen las cinco ciudades. Presupuesto reduce habitaciones, traslados y entradas; Mejor valor protege lo memorable; Mejor en general es la recomendación familiar; Premium cambia hoteles y nivel de servicio." /><div className="package-note"><Star /><p><strong>No son cuatro itinerarios inventados.</strong> Cada paquete usa el mismo motor de hoteles, transportes, atracciones y reservas. Al aplicarlo puedes abrir “Arma tu viaje” y cambiar solo Macao, un tren o cualquier día.</p></div><div className="packages-grid">{packages.map((preset) => {
-    const costs = costForSelections(preset.hotelIds, preset.transportIds, preset.localIds, preset.attractionIds, preset.foodPerPersonDay, preset.baggageReserve, state.stayNights); const packageTotal = Object.values(costs).reduce((sum, value) => sum + value, 0) + state.internationalFlights + state.insurance + state.visa + state.other; const active = JSON.stringify(state.hotelIds) === JSON.stringify(preset.hotelIds) && JSON.stringify(state.transportIds) === JSON.stringify(preset.transportIds) && JSON.stringify(state.localIds) === JSON.stringify(preset.localIds) && JSON.stringify([...state.attractionIds].sort()) === JSON.stringify([...preset.attractionIds].sort()) && state.foodPerPersonDay === preset.foodPerPersonDay && state.baggageReserve === preset.baggageReserve;
-    return <article className={`package-card package-${preset.id} ${active ? "is-active" : ""}`} key={preset.id}><header><span>{preset.name}</span>{preset.id === "comfort" && <b>Recomendado</b>}{preset.id === "premium" && <b>Máximo confort</b>}</header><h2>{money(packageTotal)}</h2><p className="per-person">{money(packageTotal / TRAVELERS)} por persona {state.internationalFlights ? "con vuelos internacionales" : "sin vuelos internacionales"}</p><p>{preset.tagline}</p><div className="package-breakdown"><span>Hoteles <b>{money(costs.hotelCost)}</b></span><span>Interurbano <b>{money(costs.transportCost)}</b></span><span>Local <b>{money(costs.localCost)}</b></span><span>Atracciones <b>{money(costs.attractionCost)}</b></span><span>Comida <b>{money(costs.foodCost)}</b></span><span>Equipaje <b>{money(costs.baggageCost)}</b></span></div><div className="package-route-preview"><strong>Hoteles</strong>{cities.map((city) => <span key={city.id}><b>{city.name}</b>{hotels.find((hotel) => hotel.id === preset.hotelIds[city.id])?.name}</span>)}</div><div className="package-route-preview compact"><strong>Traslados y salida recomendada</strong>{transportSegments.map((segment) => { const option = selectedTransportOption(segment.id, preset.transportIds[segment.id]); return <span key={segment.id}><b>{segment.from}→{segment.to}</b>{option?.mode} · {travelEventsByOption[option?.id ?? ""]?.[0]?.time ?? "confirmar"}</span>; })}</div><div className="package-day-sample"><strong>Plan de días</strong>{cities.map((city) => <p key={city.id}><b>{city.name}</b>{preset.attractionIds.map((id) => attractions.find((item) => item.id === id)).filter((item) => item?.city === city.id).slice(0, 3).map((item) => item?.name).join(" · ")}</p>)}</div><div className="gain-lose"><p><Plus /><span><strong>Ganas</strong>{preset.gain}</span></p><p><Minus /><span><strong>Pierdes</strong>{preset.lose}</span></p></div><button type="button" className="primary-button" onClick={() => applyPackage(preset)}>{active ? <Check /> : <Settings2 />}{active ? "Aplicado" : `Usar ${preset.name}`}</button></article>;
-  })}</div><div className="comparison-table-wrap"><table className="comparison-table"><thead><tr><th>Qué cambia</th>{packages.map((preset) => <th key={preset.id}>{preset.name}</th>)}</tr></thead><tbody><tr><td>Comida p/p/día</td>{packages.map((preset) => <td key={preset.id}>{money(preset.foodPerPersonDay)}</td>)}</tr><tr><td>Experiencias</td>{packages.map((preset) => <td key={preset.id}>{preset.attractionIds.length}</td>)}</tr><tr><td>Traslado local</td><td>Público</td><td>Mixto</td><td>Mixto + van ZJJ</td><td>Privado frecuente</td></tr><tr><td>Interurbano</td><td>Tren/terrestre</td><td>Vuelos/ferry</td><td>Vuelos/ferry</td><td>Vuelos/ferry</td></tr></tbody></table></div></section>;
+function PackagesPage({ applyPackage, saveCustomTrip, applyCustomTrip, state, go }: CommonProps & { applyPackage: (preset: PackagePreset) => void; saveCustomTrip: () => void; applyCustomTrip: () => void }) {
+  const saved = state.savedCustomTrip;
+  const extraCosts = state.internationalFlights + state.insurance + state.visa + state.other;
+  const customCosts = saved ? costForSelections(saved.hotelIds, saved.transportIds, saved.localIds, saved.attractionIds, saved.foodPerPersonDay, saved.baggageReserve, saved.stayNights) : null;
+  const customSubtotal = customCosts ? Object.values(customCosts).reduce((sum, value) => sum + value, 0) : 0;
+  const customActive = !!saved && JSON.stringify(state.stayNights) === JSON.stringify(saved.stayNights) && JSON.stringify(state.hotelIds) === JSON.stringify(saved.hotelIds) && JSON.stringify(state.transportIds) === JSON.stringify(saved.transportIds) && JSON.stringify(state.localIds) === JSON.stringify(saved.localIds) && JSON.stringify([...state.attractionIds].sort()) === JSON.stringify([...saved.attractionIds].sort());
+  return <section className="content-section"><PageHeader eyebrow="Cuatro paquetes + tu viaje guardado" title="Todos los paquetes bajo US$3,100 por persona" text="El límite se aplica al subtotal planificado dentro de China. Los vuelos internacionales, seguro, visa y otros importes personales se muestran aparte porque no se pueden inventar." /><div className="package-note"><Star /><p><strong>Cada paquete usa opciones reales del mismo motor.</strong> Puedes aplicar uno, modificarlo en “Arma tu viaje” y guardar esa mezcla como “Mi viaje” para recuperarla después.</p></div><div className="packages-grid">{packages.map((preset) => {
+    const costs = costForSelections(preset.hotelIds, preset.transportIds, preset.localIds, preset.attractionIds, preset.foodPerPersonDay, preset.baggageReserve, DEFAULT_NIGHTS); const packageSubtotal = Object.values(costs).reduce((sum, value) => sum + value, 0); const packageWithExtras = packageSubtotal + extraCosts; const active = JSON.stringify(state.stayNights) === JSON.stringify(DEFAULT_NIGHTS) && JSON.stringify(state.hotelIds) === JSON.stringify(preset.hotelIds) && JSON.stringify(state.transportIds) === JSON.stringify(preset.transportIds) && JSON.stringify(state.localIds) === JSON.stringify(preset.localIds) && JSON.stringify([...state.attractionIds].sort()) === JSON.stringify([...preset.attractionIds].sort()) && state.foodPerPersonDay === preset.foodPerPersonDay && state.baggageReserve === preset.baggageReserve;
+    return <article className={`package-card package-${preset.id} ${active ? "is-active" : ""}`} key={preset.id}><header><span>{preset.name}</span>{preset.id === "comfort" && <b>Recomendado</b>}{preset.id === "premium" && <b>Tope respetado</b>}</header><h2>{money(packageSubtotal)}</h2><p className="per-person">{money(packageSubtotal / TRAVELERS)} por persona · subtotal en China</p><div className="package-cap"><Check /> Bajo el límite de US$3,100 p/p</div>{extraCosts > 0 && <p className="package-extras">Con vuelos internacionales y otros importes: <strong>{money(packageWithExtras)}</strong> · {money(packageWithExtras / TRAVELERS)} p/p</p>}<p>{preset.tagline}</p><div className="package-breakdown"><span>Hoteles <b>{money(costs.hotelCost)}</b></span><span>Interurbano <b>{money(costs.transportCost)}</b></span><span>Local <b>{money(costs.localCost)}</b></span><span>Atracciones <b>{money(costs.attractionCost)}</b></span><span>Comida <b>{money(costs.foodCost)}</b></span><span>Equipaje <b>{money(costs.baggageCost)}</b></span></div><div className="package-route-preview"><strong>Hoteles</strong>{cities.map((city) => <span key={city.id}><b>{city.name}</b>{hotels.find((hotel) => hotel.id === preset.hotelIds[city.id])?.name}</span>)}</div><div className="package-route-preview compact"><strong>Traslados y salida recomendada</strong>{transportSegments.map((segment) => { const option = selectedTransportOption(segment.id, preset.transportIds[segment.id]); return <span key={segment.id}><b>{segment.from}→{segment.to}</b>{option?.mode} · {travelEventsByOption[option?.id ?? ""]?.[0]?.time ?? "confirmar"}</span>; })}</div><div className="package-day-sample"><strong>Plan de días</strong>{cities.map((city) => <p key={city.id}><b>{city.name}</b>{preset.attractionIds.map((id) => attractions.find((item) => item.id === id)).filter((item) => item?.city === city.id).slice(0, 3).map((item) => item?.name).join(" · ")}</p>)}</div><div className="gain-lose"><p><Plus /><span><strong>Ganas</strong>{preset.gain}</span></p><p><Minus /><span><strong>Pierdes</strong>{preset.lose}</span></p></div><button type="button" className="primary-button" onClick={() => applyPackage(preset)}>{active ? <Check /> : <Settings2 />}{active ? "Aplicado" : `Usar ${preset.name}`}</button></article>;
+  })}{saved && customCosts ? <article className={`package-card package-custom ${customActive ? "is-active" : ""}`}><header><span>Mi viaje</span><b>Guardado</b></header><h2>{money(customSubtotal)}</h2><p className="per-person">{money(customSubtotal / TRAVELERS)} por persona · subtotal personalizado</p><div className={`package-cap ${customSubtotal / TRAVELERS >= 3100 ? "is-over" : ""}`}>{customSubtotal / TRAVELERS < 3100 ? <Check /> : <AlertTriangle />}{customSubtotal / TRAVELERS < 3100 ? "Dentro del límite de US$3,100 p/p" : "Supera el límite; ajusta hotel, transporte o actividades"}</div>{extraCosts > 0 && <p className="package-extras">Con vuelos internacionales y otros importes: <strong>{money(customSubtotal + extraCosts)}</strong></p>}<p>Tu combinación guardada de noches, hoteles, transportes y planes diarios. Puedes aplicar otro paquete y regresar a esta versión cuando quieras.</p><div className="package-breakdown"><span>Hoteles <b>{money(customCosts.hotelCost)}</b></span><span>Interurbano <b>{money(customCosts.transportCost)}</b></span><span>Local <b>{money(customCosts.localCost)}</b></span><span>Atracciones <b>{money(customCosts.attractionCost)}</b></span><span>Comida <b>{money(customCosts.foodCost)}</b></span><span>Equipaje <b>{money(customCosts.baggageCost)}</b></span></div><div className="package-route-preview"><strong>Hoteles guardados</strong>{cities.map((city) => <span key={city.id}><b>{city.name}</b>{hotels.find((hotel) => hotel.id === saved.hotelIds[city.id])?.name}</span>)}</div><div className="custom-package-actions"><button type="button" className="primary-button" onClick={applyCustomTrip}>{customActive ? <Check /> : <Settings2 />}{customActive ? "Mi viaje aplicado" : "Usar Mi viaje"}</button><button type="button" className="quiet-button" onClick={saveCustomTrip}>Actualizar con el viaje actual</button></div></article> : <article className="package-card package-custom package-empty"><PackageCheck /><header><span>Mi viaje</span><b>Personalizado</b></header><h2>Guarda tu mezcla</h2><p>Elige días, hoteles y atracciones en el constructor. Después guarda esa combinación aquí para compararla y recuperarla aunque pruebes otro paquete.</p><button type="button" className="primary-button" onClick={() => go("arma")}>Armar Mi viaje <ArrowRight /></button><button type="button" className="quiet-button" onClick={saveCustomTrip}>Guardar la selección actual</button></article>}</div><div className="comparison-table-wrap"><table className="comparison-table"><thead><tr><th>Qué cambia</th>{packages.map((preset) => <th key={preset.id}>{preset.name}</th>)}</tr></thead><tbody><tr><td>Comida p/p/día</td>{packages.map((preset) => <td key={preset.id}>{money(preset.foodPerPersonDay)}</td>)}</tr><tr><td>Experiencias</td>{packages.map((preset) => <td key={preset.id}>{preset.attractionIds.length}</td>)}</tr><tr><td>Traslado local</td><td>Público</td><td>Mixto</td><td>Mixto + van ZJJ</td><td>Mixto optimizado</td></tr><tr><td>Interurbano</td><td>Tren/terrestre</td><td>Vuelo/tren/ferry</td><td>Vuelo/tren/ferry</td><td>Vuelo/tren/ferry</td></tr></tbody></table></div></section>;
 }
 
 function LegacyBuilderPage({ state, setState, total, go, toggleAttraction, schedule }: CommonProps) {
@@ -624,18 +680,22 @@ function LegacyBuilderPage({ state, setState, total, go, toggleAttraction, sched
   </div></section>;
 }
 
-function BuilderPage({ state, setState, total, go, schedule, bookingRows }: CommonProps) {
+function BuilderPage({ state, setState, total, go, schedule, bookingRows, saveCustomTrip }: CommonProps & { saveCustomTrip: () => void }) {
   const [cityIndex, setCityIndex] = useState(0);
   const [phase, setPhase] = useState<"days" | "hotel" | "plan" | "transport">("days");
   const [activeDay, setActiveDay] = useState(0);
+  const [attractionQuery, setAttractionQuery] = useState("");
   const city = cities[cityIndex];
   const nextCity = cities[cityIndex + 1];
   const segment = transportSegments[cityIndex];
+  const finalTransfer = !nextCity && Boolean(segment);
+  const destinationName = nextCity?.name ?? "Shanghái · noche final";
   const dayCount = Math.max(1, state.stayNights[city.id]);
   const cityPlans = Array.from({ length: dayCount }, (_, index) => state.dayPlans[city.id]?.[index] ?? []);
   const assignedToday = cityPlans[activeDay] ?? [];
   const selectedHotel = hotels.find((hotel) => hotel.id === state.hotelIds[city.id]);
   const cityAttractions = attractions.filter((item) => item.city === city.id);
+  const visibleCityAttractions = cityAttractions.filter((item) => `${item.name} ${item.area} ${item.category}`.toLowerCase().includes(attractionQuery.toLowerCase()));
   const allAssigned = new Set(cityPlans.flat());
   const plannedItems = assignedToday.map((id) => attractions.find((item) => item.id === id)).filter(Boolean) as typeof attractions;
   const plannedHours = plannedItems.reduce((sum, item) => sum + item.duration, 0);
@@ -696,7 +756,8 @@ function BuilderPage({ state, setState, total, go, schedule, bookingRows }: Comm
   const nextPhase = () => {
     if (phase === "days") setPhase("hotel");
     else if (phase === "hotel") setPhase("plan");
-    else if (phase === "plan") setPhase(nextCity ? "transport" : "days");
+    else if (phase === "plan") setPhase(segment ? "transport" : "days");
+    else if (finalTransfer) go("resumen");
     else if (nextCity) { setCityIndex((index) => index + 1); setActiveDay(0); setPhase("days"); }
   };
 
@@ -707,23 +768,23 @@ function BuilderPage({ state, setState, total, go, schedule, bookingRows }: Comm
     else if (cityIndex > 0) { setCityIndex((index) => index - 1); setActiveDay(0); setPhase("transport"); }
   };
 
-  const hotelChoices = Array.from(new globalThis.Map<string, (typeof hotels)[number]>([...hotels.filter((hotel) => hotel.city === city.id).sort((a, b) => hotelStayPrice(a, dayCount) - hotelStayPrice(b, dayCount)).slice(0, 5), ...(selectedHotel ? [selectedHotel] : [])].map((hotel) => [hotel.id, hotel])).values());
+  const hotelChoices = hotels.filter((hotel) => hotel.city === city.id).sort((a, b) => hotelStayPrice(a, dayCount) - hotelStayPrice(b, dayCount));
 
   return <section className="content-section guided-builder-page"><PageHeader eyebrow="Constructor guiado · guardado automático" title="Arma tu viaje ciudad por ciudad" text="Decide cuántos días, dónde dormir, qué hacer cada día y cómo llegar al siguiente destino. La app agrupa zonas, calcula carga real y mantiene un resumen visible." />
     <div className="builder-city-rail">{cities.map((item, index) => <button type="button" key={item.id} className={`${index === cityIndex ? "is-active" : ""} ${index < cityIndex ? "is-done" : ""}`} onClick={() => { setCityIndex(index); setActiveDay(0); setPhase("days"); }}><span>{index < cityIndex ? <Check /> : index + 1}</span><strong>{item.name}</strong><small>{state.stayNights[item.id]} noches · {(state.dayPlans[item.id] ?? []).filter((day) => day.length).length} días armados</small></button>)}</div>
-    <div className="guided-layout"><main className="guided-workspace"><header className="guided-city-header"><div><span className="eyebrow">Ciudad {cityIndex + 1} de {cities.length}</span><h2>{city.name}</h2><p>{schedule.cityDateLabels[city.id]} · {city.id === "shanghai" ? "incluye la noche final de regreso" : `siguiente: ${nextCity?.name ?? "vuelo internacional"}`}</p></div><div className="phase-pills">{(["days", "hotel", "plan", "transport"] as const).filter((item) => item !== "transport" || nextCity).map((item, index) => <button type="button" key={item} className={phase === item ? "is-active" : ""} onClick={() => setPhase(item)}>{index + 1}. {item === "days" ? "Días" : item === "hotel" ? "Hotel" : item === "plan" ? "Itinerario" : "Traslado"}</button>)}</div></header>
+    <div className="guided-layout"><main className="guided-workspace"><header className="guided-city-header"><div><span className="eyebrow">Ciudad {cityIndex + 1} de {cities.length}</span><h2>{city.name}</h2><p>{schedule.cityDateLabels[city.id]} · {city.id === "shanghai" ? "incluye la noche final de regreso" : `siguiente: ${destinationName}`}</p></div><div className="phase-pills">{(["days", "hotel", "plan", "transport"] as const).filter((item) => item !== "transport" || segment).map((item, index) => <button type="button" key={item} className={phase === item ? "is-active" : ""} onClick={() => setPhase(item)}>{index + 1}. {item === "days" ? "Días" : item === "hotel" ? "Hotel" : item === "plan" ? "Itinerario" : "Traslado"}</button>)}</div></header>
 
       {phase === "days" && <section className="guided-panel days-choice"><div className="panel-intro"><CalendarDays /><div><span>Paso 1</span><h3>¿Cuántos días quieren en {city.name}?</h3><p>El viaje mantiene {TOTAL_NIGHTS} noches. Al añadir una aquí, la app toma una noche de la ciudad con más margen; al quitarla, la pasa al siguiente destino.</p></div></div><div className="day-counter"><button type="button" onClick={() => resizeCity(-1)} disabled={state.stayNights[city.id] <= (city.id === "shanghai" ? 2 : 1)}><Minus /></button><strong>{state.stayNights[city.id]}</strong><span>{state.stayNights[city.id] === 1 ? "noche / día de plan" : "noches / días de plan"}<small>{schedule.cityDateLabels[city.id]}</small></span><button type="button" onClick={() => resizeCity(1)}><Plus /></button></div><div className="smart-recommendation"><Sparkles /><div><strong>Recomendación práctica</strong><p>{city.id === "shanghai" ? "4 noches permiten centro, Pudong, una experiencia de ciencia y la noche final." : city.id === "zhangjiajie" ? "4 noches protegen el plan contra niebla y separan parque, cañón y Tianmen." : city.id === "shenzhen" ? "3 noches alcanzan para tecnología, museo y una tarde de diseño/comida." : city.id === "macau" ? "1 noche obliga a escoger; 2 permiten patrimonio, Cotai y descanso sin correr." : "3 noches permiten isla, Kowloon y un día completo en Lantau u Ocean Park."}</p></div></div></section>}
 
-      {phase === "hotel" && <section className="guided-panel"><div className="panel-intro"><Hotel /><div><span>Paso 2</span><h3>Elige hotel en {city.name}</h3><p>Primero aparecen alternativas de mejor precio más el hotel actual. El total ya usa {dayCount} noches y una configuración conservadora para cinco.</p></div></div><div className="builder-hotel-choice">{hotelChoices.map((hotel) => { const selected = state.hotelIds[city.id] === hotel.id; return <button type="button" className={selected ? "is-selected" : ""} key={hotel.id} onClick={() => setState((current) => ({ ...current, hotelIds: { ...current.hotelIds, [city.id]: hotel.id } }))}><img src={hotel.image} alt="" /><span><small>{hotel.tier} · {hotel.area}</small><strong>{hotel.name}</strong><em>{money(hotelStayPrice(hotel, dayCount))} para 5</em><p>{hotel.description}</p></span>{selected && <Check />}</button>; })}</div><button type="button" className="quiet-button" onClick={() => go("hoteles")}>Comparar las {hotels.filter((hotel) => hotel.city === city.id).length} opciones y galerías <ArrowRight /></button><div className="local-inline"><Bus /><label><span>Transporte local recomendado para 5 + maletas</span><select value={state.localIds[city.id]} onChange={(event) => setState((current) => ({ ...current, localIds: { ...current.localIds, [city.id]: event.target.value } }))}>{localPlans.filter((plan) => plan.city === city.id).map((plan) => <option key={plan.id} value={plan.id}>{plan.name} · {money(localPlanPrice(plan, dayCount))}</option>)}</select></label></div></section>}
+      {phase === "hotel" && <section className="guided-panel"><div className="panel-intro"><Hotel /><div><span>Paso 2</span><h3>Elige hotel en {city.name}</h3><p>Se muestran las {hotelChoices.length} opciones, ordenadas por total para cinco. El cálculo ya usa {dayCount} noches y la configuración conservadora de habitaciones.</p></div></div><div className="builder-list-count"><Hotel /> {hotelChoices.length} hoteles disponibles · desplázate para compararlos todos</div><div className="builder-hotel-choice">{hotelChoices.map((hotel) => { const selected = state.hotelIds[city.id] === hotel.id; return <button type="button" className={selected ? "is-selected" : ""} key={hotel.id} onClick={() => setState((current) => ({ ...current, hotelIds: { ...current.hotelIds, [city.id]: hotel.id } }))}><img src={hotel.image} alt="" /><span><small>{hotel.tier} · {hotel.area}</small><strong>{hotel.name}</strong><em>{money(hotelStayPrice(hotel, dayCount))} para 5</em><p>{hotel.description}</p></span>{selected && <Check />}</button>; })}</div><button type="button" className="quiet-button" onClick={() => go("hoteles")}>Abrir comparador completo y galerías <ArrowRight /></button><div className="local-inline"><Bus /><label><span>Transporte local recomendado para 5 + maletas</span><select value={state.localIds[city.id]} onChange={(event) => setState((current) => ({ ...current, localIds: { ...current.localIds, [city.id]: event.target.value } }))}>{localPlans.filter((plan) => plan.city === city.id).map((plan) => <option key={plan.id} value={plan.id}>{plan.name} · {money(localPlanPrice(plan, dayCount))}</option>)}</select></label></div></section>}
 
-      {phase === "plan" && <section className="guided-panel planner-panel"><div className="panel-intro"><TicketCheck /><div><span>Paso 3</span><h3>Construye cada día sin cruzar la ciudad</h3><p>Elige un día, añade experiencias y revisa la carga. Las tarjetas muestran zona, momento recomendado y duración real.</p></div></div><div className="day-tabs">{cityPlans.map((ids, index) => <button type="button" key={index} className={activeDay === index ? "is-active" : ""} onClick={() => setActiveDay(index)}><span>Día {index + 1}</span><strong>{ids.length ? `${ids.length} planes` : "Vacío"}</strong></button>)}</div><div className={`day-load ${overloaded ? "is-overloaded" : ""}`}><div><Clock3 /><span><strong>{plannedHours.toLocaleString("es", { maximumFractionDigits: 1 })} h</strong> · {areaRoots.size || 0} zona(s)</span></div><p>{overloaded ? "Este día no es realista: supera 8 horas, cruza más de dos zonas o tiene horarios que se pisan." : assignedToday.length ? "Carga razonable. Deja margen para comida, metro, filas y cambios de clima." : "Empieza con una recomendación por zona o elige manualmente."}</p><button type="button" onClick={recommendDay}><Sparkles /> Recomendar este día</button></div>{plannedItems.length > 0 && <div className="planned-timeline">{plannedItems.sort((a, b) => a.time.localeCompare(b.time)).map((item) => <article key={item.id}><time>{item.time}</time><span /><div><strong>{item.name}</strong><small>{item.recommendedTime} · {item.duration} h · {item.area}</small></div><button type="button" onClick={() => assignAttraction(item.id)} aria-label={`Quitar ${item.name}`}><X /></button></article>)}</div>}<div className="builder-attraction-browser">{cityAttractions.sort((a, b) => (a.area ?? "").localeCompare(b.area ?? "") || a.time.localeCompare(b.time)).map((item) => { const today = assignedToday.includes(item.id); const anotherDay = allAssigned.has(item.id) && !today; return <article key={item.id} className={`${today ? "is-selected" : ""} ${anotherDay ? "is-other-day" : ""}`}><img src={item.image} alt="" /><div><small>{item.area} · {item.category}</small><h4>{item.name}</h4><p>{item.description}</p><span><Clock3 /> {item.recommendedTime} · {item.duration} h</span><strong>{item.pricePerPerson ? `${money(item.pricePerPerson * TRAVELERS)} para 5` : "Gratis"}</strong></div><button type="button" onClick={() => assignAttraction(item.id)} disabled={anotherDay}>{today ? <><Check /> En día {activeDay + 1}</> : anotherDay ? "Ya está en otro día" : <><Plus /> Añadir</>}</button></article>; })}</div></section>}
+      {phase === "plan" && <section className="guided-panel planner-panel"><div className="panel-intro"><TicketCheck /><div><span>Paso 3</span><h3>Construye cada día sin cruzar la ciudad</h3><p>Elige un día, añade experiencias y revisa la carga. Las tarjetas muestran zona, momento recomendado y duración real.</p></div></div><div className="day-tabs">{cityPlans.map((ids, index) => <button type="button" key={index} className={activeDay === index ? "is-active" : ""} onClick={() => setActiveDay(index)}><span>Día {index + 1}</span><strong>{ids.length ? `${ids.length} planes` : "Vacío"}</strong></button>)}</div><div className={`day-load ${overloaded ? "is-overloaded" : ""}`}><div><Clock3 /><span><strong>{plannedHours.toLocaleString("es", { maximumFractionDigits: 1 })} h</strong> · {areaRoots.size || 0} zona(s)</span></div><p>{overloaded ? "Este día no es realista: supera 8 horas, cruza más de dos zonas o tiene horarios que se pisan." : assignedToday.length ? "Carga razonable. Deja margen para comida, metro, filas y cambios de clima." : "Empieza con una recomendación por zona o elige manualmente."}</p><button type="button" onClick={recommendDay}><Sparkles /> Recomendar este día</button></div>{plannedItems.length > 0 && <div className="planned-timeline">{plannedItems.sort((a, b) => a.time.localeCompare(b.time)).map((item) => <article key={item.id}><time>{item.time}</time><span /><div><strong>{item.name}</strong><small>{item.recommendedTime} · {item.duration} h · {item.area}</small></div><button type="button" onClick={() => assignAttraction(item.id)} aria-label={`Quitar ${item.name}`}><X /></button></article>)}</div>}<div className="builder-browser-tools"><div className="search-box"><Search /><input value={attractionQuery} onChange={(event) => setAttractionQuery(event.target.value)} placeholder="Buscar atracción, zona o categoría" aria-label="Buscar atracciones dentro del constructor" /></div><span>{visibleCityAttractions.length} de {cityAttractions.length} atracciones visibles</span></div><div className="builder-attraction-browser">{visibleCityAttractions.sort((a, b) => (a.area ?? "").localeCompare(b.area ?? "") || a.time.localeCompare(b.time)).map((item) => { const today = assignedToday.includes(item.id); const anotherDay = allAssigned.has(item.id) && !today; return <article key={item.id} className={`${today ? "is-selected" : ""} ${anotherDay ? "is-other-day" : ""}`}><img src={item.image} alt="" /><div><small>{item.area} · {item.category}</small><h4>{item.name}</h4><p>{item.description}</p><span><Clock3 /> {item.recommendedTime} · {item.duration} h</span><strong>{item.pricePerPerson ? `${money(item.pricePerPerson * TRAVELERS)} para 5` : "Gratis"}</strong></div><button type="button" onClick={() => assignAttraction(item.id)} disabled={anotherDay}>{today ? <><Check /> En día {activeDay + 1}</> : anotherDay ? "Ya está en otro día" : <><Plus /> Añadir</>}</button></article>; })}</div></section>}
 
-      {phase === "transport" && segment && nextCity && <section className="guided-panel"><div className="panel-intro"><TrainFront /><div><span>Paso 4</span><h3>¿Cómo van de {city.name} a {nextCity.name}?</h3><p>Fecha calculada: {shortDate(schedule.segmentDates[segment.id])}. Comparamos hotel a hotel, equipaje y tiempo perdido, no solo horas de vuelo.</p></div></div><div className="builder-transport-choice">{segment.options.map((option) => { const selected = state.transportIds[segment.id] === option.id; return <button type="button" key={option.id} className={selected ? "is-selected" : ""} onClick={() => setState((current) => ({ ...current, transportIds: { ...current.transportIds, [segment.id]: option.id } }))}><span className="mode-icon">{option.mode === "Vuelo" ? <Plane /> : option.mode === "Ferry" ? <Ship /> : option.mode === "Autobús" ? <Bus /> : <TrainFront />}</span><div><small>{option.mode} · {option.recommended ? "Recomendado" : "Alternativa"}</small><strong>{option.name}</strong><p>{option.doorToDoor} · {option.schedule}</p><span>{option.luggage}</span></div><b>{money(option.groupPrice)}<small>para 5</small></b>{selected && <Check />}</button>; })}</div>{(() => { const option = selectedTransportOption(segment.id, state.transportIds[segment.id]); return option ? <div className="departure-advice"><Clock3 /><div><strong>Hora de salida recomendada</strong><p>{travelEventsByOption[option.id]?.[0]?.time ?? "Confirmar"} desde el hotel. {option.status === "NO_PUBLICADO" ? "El horario exacto todavía no está publicado; bloquea el día sin inventar un tren." : option.statusNote}</p></div><SourceLink href={transportBookingUrl(option, schedule.segmentDates[segment.id])} label="Buscar/comprar" /></div> : null; })()}</section>}
+      {phase === "transport" && segment && <section className="guided-panel"><div className="panel-intro"><TrainFront /><div><span>Paso 4</span><h3>¿Cómo van de {city.name} a {destinationName}?</h3><p>Fecha calculada: {shortDate(schedule.segmentDates[segment.id])}. Comparamos hotel a hotel, equipaje y tiempo perdido, no solo horas de vuelo.</p></div></div><div className="builder-transport-choice">{segment.options.map((option) => { const selected = state.transportIds[segment.id] === option.id; return <button type="button" key={option.id} className={selected ? "is-selected" : ""} onClick={() => setState((current) => ({ ...current, transportIds: { ...current.transportIds, [segment.id]: option.id } }))}><span className="mode-icon">{option.mode === "Vuelo" ? <Plane /> : option.mode === "Ferry" ? <Ship /> : option.mode === "Autobús" ? <Bus /> : <TrainFront />}</span><div><small>{option.mode} · {option.recommended ? "Recomendado" : "Alternativa"}</small><strong>{option.name}</strong><p>{option.doorToDoor} · {option.schedule}</p><span>{option.luggage}</span></div><b>{money(option.groupPrice)}<small>para 5</small></b>{selected && <Check />}</button>; })}</div>{(() => { const option = selectedTransportOption(segment.id, state.transportIds[segment.id]); return option ? <div className="departure-advice"><Clock3 /><div><strong>Hora de salida recomendada</strong><p>{travelEventsByOption[option.id]?.[0]?.time ?? "Confirmar"} desde el hotel. {option.status === "NO_PUBLICADO" ? "El horario exacto todavía no está publicado; bloquea el día sin inventar un tren." : option.statusNote}</p></div><SourceLink href={transportBookingUrl(option, schedule.segmentDates[segment.id])} label="Buscar/comprar" /></div> : null; })()}</section>}
 
-      <footer className="builder-navigation"><button type="button" onClick={previousPhase} disabled={phase === "days" && cityIndex === 0}><ArrowRight className="back-arrow" /> Atrás</button><span>{phase === "plan" ? `${completedDays}/${dayCount} días con plan` : selectedHotel?.name}</span>{cityIndex === cities.length - 1 && phase === "plan" ? <button type="button" className="primary-button" onClick={() => go("resumen")}>Terminar y ver resumen <ArrowRight /></button> : <button type="button" className="primary-button" onClick={nextPhase}>Continuar <ArrowRight /></button>}</footer></main>
+      <footer className="builder-navigation"><button type="button" onClick={previousPhase} disabled={phase === "days" && cityIndex === 0}><ArrowRight className="back-arrow" /> Atrás</button><span>{phase === "plan" ? `${completedDays}/${dayCount} días con plan` : selectedHotel?.name}</span>{finalTransfer && phase === "transport" ? <button type="button" className="primary-button" onClick={() => go("resumen")}>Terminar y ver resumen <ArrowRight /></button> : <button type="button" className="primary-button" onClick={nextPhase}>Continuar <ArrowRight /></button>}</footer></main>
 
-      <aside className="builder-live-summary"><header><span>Tu viaje en vivo</span><strong>{money(total)}</strong><small>{money(total / TRAVELERS)} por persona</small></header><div className="summary-progress"><span><i style={{ width: `${Math.min(100, tripPlannedDays / TOTAL_NIGHTS * 100)}%` }} /></span><p>{tripPlannedDays} días armados · {Math.max(0, remainingDays)} por completar</p></div><ol>{cities.map((item, index) => { const hotel = hotels.find((candidate) => candidate.id === state.hotelIds[item.id]); const count = (state.dayPlans[item.id] ?? []).flat().length; return <li key={item.id} className={index === cityIndex ? "is-active" : ""}><span>{index + 1}</span><div><strong>{item.name} · {state.stayNights[item.id]}n</strong><small>{hotel?.name ?? "Hotel pendiente"}</small><em>{count} atracciones asignadas</em></div></li>; })}</ol><div className="summary-missing"><AlertTriangle /><div><strong>{missingBookings} reservas aún no marcadas como compradas</strong><p>Incluye opciones listas, horarios pendientes y actividades gratuitas opcionales.</p></div></div><button type="button" onClick={() => go("reservas")}>Ver qué falta comprar <ArrowRight /></button></aside></div>
+      <aside className="builder-live-summary"><header><span>Tu viaje en vivo</span><strong>{money(total)}</strong><small>{money(total / TRAVELERS)} por persona</small></header><div className="summary-progress"><span><i style={{ width: `${Math.min(100, tripPlannedDays / TOTAL_NIGHTS * 100)}%` }} /></span><p>{tripPlannedDays} días armados · {Math.max(0, remainingDays)} por completar</p></div><ol>{cities.map((item, index) => { const hotel = hotels.find((candidate) => candidate.id === state.hotelIds[item.id]); const count = (state.dayPlans[item.id] ?? []).flat().length; return <li key={item.id} className={index === cityIndex ? "is-active" : ""}><span>{index + 1}</span><div><strong>{item.name} · {state.stayNights[item.id]}n</strong><small>{hotel?.name ?? "Hotel pendiente"}</small><em>{count} atracciones asignadas</em></div></li>; })}</ol><div className="summary-missing"><AlertTriangle /><div><strong>{missingBookings} reservas aún no marcadas como compradas</strong><p>Incluye opciones listas, horarios pendientes y actividades gratuitas opcionales.</p></div></div><button type="button" className="save-custom-trip" onClick={saveCustomTrip}><PackageCheck /> Guardar como “Mi viaje”</button><button type="button" onClick={() => go("reservas")}>Ver qué falta comprar <ArrowRight /></button></aside></div>
   </section>;
 }
 
@@ -743,7 +804,7 @@ function ShoppingPage({ state, schedule }: CommonProps) {
   const [query, setQuery] = useState("");
   const filteredPlaces = shoppingPlaces.filter((place) => (cityFilter === "all" || place.city === cityFilter) && `${place.name} ${place.specialty} ${place.area} ${place.buy}`.toLowerCase().includes(query.toLowerCase()));
   const dynamicWhen = (item: (typeof shoppingGuide)[number]) => item.bestCity.startsWith("Shenzhen") ? schedule.cityDateLabels.shenzhen : item.bestCity.startsWith("Hong Kong") ? schedule.cityDateLabels.hongkong : item.bestCity.startsWith("Macao") ? schedule.cityDateLabels.macau : item.bestCity.startsWith("Shanghái") ? schedule.cityDateLabels.shanghai : "No comprar";
-  return <section className="content-section"><PageHeader eyebrow="Tiendas y mercados investigados" title="Tecnología, PC, drones, ropa y compras finales" text="Shenzhen conserva la ventaja para electrónica y componentes; Hong Kong sirve como segunda comparación y para ropa al final. Cada lugar explica qué comprar, qué comprobar y la fuente utilizada." /><div className="shopping-weight"><ShoppingBag /><div><span>Peso adicional previsto</span><strong>{state.shoppingWeightKg} kg</strong><small>≈{Math.ceil(state.shoppingWeightKg / TRAVELERS)} kg por persona si se reparte entre 5</small></div><p>Empacar una bolsa plegable y dejar al menos este margen en la franquicia del vuelo HKG→PVG y del regreso a JFK.</p></div><div className="shopping-grid">{shoppingGuide.map((item) => <article key={item.category}><header><ShoppingBag /><div><small>Ventana actual · {dynamicWhen(item)}</small><h2>{item.category}</h2></div></header><div className="best-city"><MapPin />{item.bestCity}</div><p>{item.action}</p><div className="warning-line"><AlertTriangle />{item.warning}</div><SourceLink href={item.source} /></article>)}</div><section className="shopping-directory"><div className="section-title-row"><div><span className="eyebrow">Directorio práctico</span><h2>{shoppingPlaces.length} lugares verificados o señalados como variables</h2></div><span>{filteredPlaces.length} visibles</span></div><div className="shopping-filters"><div className="search-box"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="RAM, SSD, drones, ropa…" aria-label="Buscar tiendas o productos" /></div><select value={cityFilter} onChange={(event) => setCityFilter(event.target.value as CityId | "all")} aria-label="Filtrar tiendas por ciudad"><option value="all">Todas las ciudades</option>{cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}</select></div><div className="shopping-place-grid">{filteredPlaces.map((place) => <article key={`${place.city}-${place.name}`}><header><div><small>{cityName(place.city)} · {place.area}</small><h3>{place.name}</h3></div><EvidenceBadge status={place.status} /></header><strong>{place.specialty}</strong><dl><div><dt>Qué hacer</dt><dd>{place.buy}</dd></div><div><dt>Comprobar</dt><dd>{place.verify}</dd></div><div><dt>Momento</dt><dd>{place.timing} · estancia {schedule.cityDateLabels[place.city]}</dd></div></dl><SourceLink href={place.source} label="Abrir fuente/lugar" /></article>)}</div>{!filteredPlaces.length && <div className="empty-state"><ShoppingBag /><h3>No hay coincidencias</h3><p>Prueba otra ciudad o producto.</p></div>}</section><div className="shopping-timeline"><h2>Orden recomendado con fechas flexibles</h2><div><span><b>{schedule.cityDateLabels.shenzhen}</b><strong>Comparar y comprar tecnología</strong><small>Primero SEG/Huaqiangbei; luego DJI oficial o Sundan.</small></span><ArrowRight /><span><b>{schedule.cityDateLabels.macau}</b><strong>Solo productos de Macao</strong><small>Comida para consumir durante el viaje y recuerdos específicos.</small></span><ArrowRight /><span><b>{schedule.cityDateLabels.hongkong}</b><strong>Segunda comparación + ropa</strong><small>Golden Computer, Citygate, Mong Kok y mercados.</small></span><ArrowRight /><span><b>{schedule.cityDateLabels.shanghai}</b><strong>Empaquetado final</strong><small>Solo compras oficiales o regalos que falten.</small></span></div></div></section>;
+  return <section className="content-section"><PageHeader eyebrow="Tiendas y mercados investigados" title="Tecnología, PC, drones, ropa y compras finales" text="Hong Kong sirve para comparar precios primero; Shenzhen queda casi al final y concentra las compras principales de electrónica, drones y ropa económica. Cada lugar explica qué comprar, qué comprobar y la fuente utilizada." /><div className="shopping-weight"><ShoppingBag /><div><span>Peso adicional previsto</span><strong>{state.shoppingWeightKg} kg</strong><small>≈{Math.ceil(state.shoppingWeightKg / TRAVELERS)} kg por persona si se reparte entre 5</small></div><p>Empacar una bolsa plegable y dejar este margen en la franquicia del vuelo SZX→SHA y del regreso a JFK. Las baterías sueltas y power banks van en cabina.</p></div><div className="shopping-grid">{shoppingGuide.map((item) => <article key={item.category}><header><ShoppingBag /><div><small>Ventana actual · {dynamicWhen(item)}</small><h2>{item.category}</h2></div></header><div className="best-city"><MapPin />{item.bestCity}</div><p>{item.action}</p><div className="warning-line"><AlertTriangle />{item.warning}</div><SourceLink href={item.source} /></article>)}</div><section className="shopping-directory"><div className="section-title-row"><div><span className="eyebrow">Directorio práctico</span><h2>{shoppingPlaces.length} lugares verificados o señalados como variables</h2></div><span>{filteredPlaces.length} visibles</span></div><div className="shopping-filters"><div className="search-box"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="RAM, SSD, drones, ropa…" aria-label="Buscar tiendas o productos" /></div><select value={cityFilter} onChange={(event) => setCityFilter(event.target.value as CityId | "all")} aria-label="Filtrar tiendas por ciudad"><option value="all">Todas las ciudades</option>{cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}</select></div><div className="shopping-place-grid">{filteredPlaces.map((place) => <article key={`${place.city}-${place.name}`}><header><div><small>{cityName(place.city)} · {place.area}</small><h3>{place.name}</h3></div><EvidenceBadge status={place.status} /></header><strong>{place.specialty}</strong><dl><div><dt>Qué hacer</dt><dd>{place.buy}</dd></div><div><dt>Comprobar</dt><dd>{place.verify}</dd></div><div><dt>Momento</dt><dd>{place.timing} · estancia {schedule.cityDateLabels[place.city]}</dd></div></dl><SourceLink href={place.source} label="Abrir fuente/lugar" /></article>)}</div>{!filteredPlaces.length && <div className="empty-state"><ShoppingBag /><h3>No hay coincidencias</h3><p>Prueba otra ciudad o producto.</p></div>}</section><div className="shopping-timeline"><h2>Orden recomendado con fechas flexibles</h2><div><span><b>{schedule.cityDateLabels.hongkong}</b><strong>Comparar y comprar solo ventajas claras</strong><small>Golden Computer y marcas oficiales; evitar cargar compras voluminosas.</small></span><ArrowRight /><span><b>{schedule.cityDateLabels.macau}</b><strong>Recuerdos específicos</strong><small>Comida para consumir durante el viaje y productos propios de Macao.</small></span><ArrowRight /><span><b>{schedule.cityDateLabels.shenzhen}</b><strong>Compra principal</strong><small>SEG/Huaqiangbei, DJI oficial y Dongmen; probar, facturar y pesar.</small></span><ArrowRight /><span><b>{schedule.cityDateLabels.shanghai}</b><strong>Empaquetado final</strong><small>Solo regalos faltantes y reorganizar maletas antes de JFK.</small></span></div></div></section>;
 }
 
 function LuggagePage({ state, setState, baseCosts, schedule }: CommonProps) {

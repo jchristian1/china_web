@@ -5,14 +5,14 @@ export type BookingState = "RESERVADO" | "LISTO" | "ESPERANDO" | "OPCIONAL";
 export const TRAVELERS = 5;
 export const TRIP_DAYS = 16;
 export const TOTAL_NIGHTS = 15;
-export const UPDATED_AT = "1 sep 2026";
+export const UPDATED_AT = "2 sep 2026";
 
 export const cities: Array<{ id: CityId; name: string; dates: string; nights: number }> = [
   { id: "shanghai", name: "Shanghái", dates: "25–28 nov + 9–10 dic", nights: 4 },
   { id: "zhangjiajie", name: "Zhangjiajie", dates: "28 nov–2 dic", nights: 4 },
-  { id: "shenzhen", name: "Shenzhen", dates: "2–5 dic", nights: 3 },
+  { id: "hongkong", name: "Hong Kong", dates: "2–5 dic", nights: 3 },
   { id: "macau", name: "Macao", dates: "5–6 dic", nights: 1 },
-  { id: "hongkong", name: "Hong Kong", dates: "6–9 dic", nights: 3 },
+  { id: "shenzhen", name: "Shenzhen", dates: "6–9 dic", nights: 3 },
 ];
 
 export const DEFAULT_NIGHTS: Record<CityId, number> = Object.fromEntries(cities.map((city) => [city.id, city.nights])) as Record<CityId, number>;
@@ -478,43 +478,42 @@ export interface TransportSegment {
 export const transportSegments: TransportSegment[] = [
   {
     id: "sh-zjj", date: "28 nov", from: "Shanghái", to: "Zhangjiajie",
-    why: "El vuelo ahorra el cambio de estación y deja la tarde para instalarse; el tren solo gana si se prioriza evitar aeropuertos.",
+    why: "El vuelo directo sigue siendo la mejor relación tiempo/energía para cinco personas. El tren evita aeropuertos, pero ocupa prácticamente todo el día.",
     options: [
-      { id: "sh-zjj-flight", mode: "Vuelo", name: "Shanghai Airlines FM7225 · PVG→DYG", schedule: "Patrón vigente: 10:15–12:25", doorToDoor: "≈7 h 40 min hotel→hotel", groupPrice: 625, priceNote: "$125 p/p de presupuesto; tarifa exacta variable.", status: "VARIABLE", statusNote: "Número y hora observados en el patrón actual; confirmar el 28 nov antes de pagar.", luggage: "La franquicia depende de la tarifa. No asumir maleta hasta verla en el checkout.", comfort: "3/5", pros: ["Más rápido puerta a puerta", "Llegada con luz"], cons: ["PVG lejos del centro", "Seguridad y equipaje"], bookingUrl: "https://www.google.com/travel/flights?q=Flights%20from%20PVG%20to%20DYG%20on%202026-11-28", sourceUrl: "https://www.flight.info/FM7225", recommended: true },
+      { id: "sh-zjj-flight", mode: "Vuelo", name: "Vuelo directo Shanghái→Zhangjiajie · PVG/SHA→DYG", schedule: "Servicios directos actuales ≈2 h 10–2 h 30; hora y número del 28 nov variables", doorToDoor: "≈6 h 30–7 h 30 hotel→hotel", groupPrice: 625, priceNote: "US$125 p/p de presupuesto; no es una tarifa bloqueada.", status: "VARIABLE", statusNote: "La ruta directa existe, pero hay que escoger el vuelo que realmente aparezca el 28 nov; no se fija un número antes del checkout.", luggage: "La franquicia depende de aerolínea y tarifa. Exigir 1 maleta facturada por persona antes de pagar.", comfort: "3/5", pros: ["Ahorra varias horas", "Permite llegar con luz si se elige una salida matutina"], cons: ["Aeropuertos y controles", "Equipaje no siempre incluido"], bookingUrl: "https://www.google.com/travel/flights?q=Flights%20from%20SHA%20to%20DYG%20on%202026-11-28", sourceUrl: "https://www.google.com/travel/flights/flights-from-shanghai-to-zhangjiajie.html", recommended: true },
       { id: "sh-zjj-train", mode: "Tren", name: "HSR Shanghai Hongqiao→Zhangjiajie West", schedule: "Trenes actuales desde 7 h 15; horario del 28 nov no publicado", doorToDoor: "≈9 h 15–11 h hotel→hotel", groupPrice: 590, priceNote: "¥800–880 p/p observado, según tren/clase; presupuesto convertido.", status: "NO_PUBLICADO", statusNote: "12306 vende normalmente 15 días antes; no seleccionar un número de tren todavía.", luggage: "20 kg por adulto; suma de dimensiones ≤130 cm; sin facturación de equipaje.", comfort: "4/5", pros: ["Centro a centro parcial", "Más movimiento durante el viaje"], cons: ["Día casi completo", "5 maletas pasan control y estaciones"], bookingUrl: "https://www.12306.cn/en/", sourceUrl: "https://us.trip.com/trains/china/route/shanghai-hongqiao-to-zhangjiajiexi-zhangjiajie-west/" },
     ],
   },
   {
-    id: "zjj-sz", date: "2 dic", from: "Zhangjiajie", to: "Shenzhen",
-    why: "El vuelo nocturno conserva una mañana de respaldo por niebla o lluvia. El tren es cómodo, pero consume casi todo el día.",
+    id: "zjj-hk", date: "2 dic", from: "Zhangjiajie", to: "Hong Kong",
+    why: "El tren directo actual llega a West Kowloon sin conexión ni aeropuerto. El vuelo sería más corto, pero la aerolínea no muestra resultados para noviembre/diciembre de 2026.",
     options: [
-      { id: "zjj-sz-flight", mode: "Vuelo", name: "Suparna Y87574 · DYG→SZX", schedule: "Patrón vigente mié/vie/dom: 19:40–21:45", doorToDoor: "≈6 h hotel→hotel", groupPrice: 575, priceNote: "$115 p/p de presupuesto; tarifa y equipaje variables.", status: "VARIABLE", statusNote: "Opera con patrón mié/vie/dom en la fuente vigente; al mover noches hay que comprobar que la nueva fecha coincida y reconfirmar operación.", luggage: "Fuentes comerciales indican franquicia Economy, pero no hay tabla oficial accesible: verificar en la tarifa.", comfort: "3/5", pros: ["Protege la mañana", "Ahorra 2–4 horas"], cons: ["Llegada tarde", "Operador con menos frecuencias"], bookingUrl: "https://www.google.com/travel/flights?q=Flights%20from%20DYG%20to%20SZX%20on%202026-12-02", sourceUrl: "https://www.wego.com/schedules/dyg/szx/flight-schedules-from-zhangjiajie-to-shenzhen", recommended: true },
-      { id: "zjj-sz-train", mode: "Tren", name: "HSR Zhangjiajie West→Shenzhen North", schedule: "Trenes actuales desde 6 h 20; horario del 2 dic no publicado", doorToDoor: "≈8 h 35–9 h 45 hotel→hotel", groupPrice: 500, priceNote: "¥665–760 p/p observado; presupuesto convertido.", status: "NO_PUBLICADO", statusNote: "Comprar en 12306 cuando se abra la ventana; no hay número verificable aún.", luggage: "20 kg por adulto y 130 cm lineales; cada viajero maneja su maleta.", comfort: "4/5", pros: ["Más fiable con equipaje incluido", "Asientos amplios"], cons: ["Pierde la mañana flexible", "Traslado largo a Zhangjiajie West"], bookingUrl: "https://www.12306.cn/en/", sourceUrl: "https://us.trip.com/trains/china/route/zhangjiajiexi-zhangjiajie-west-to-shenzhenbei-shenzhen-north/" },
+      { id: "zjj-hk-train", mode: "Tren", name: "HSR directo Zhangjiajie West→Hong Kong West Kowloon", schedule: "Patrón actual ≈15:10–21:51 · 6 h 41; tren del 2 dic aún no a la venta", doorToDoor: "≈9 h hotel→hotel", groupPrice: 600, priceNote: "≈US$120 p/p en 2ª clase observado; precio del 2 dic pendiente.", status: "NO_PUBLICADO", statusNote: "Existe un servicio directo actual, pero 12306/MTR todavía no han abierto el inventario del 2 dic. Comprar cuando abra la ventana oficial.", luggage: "20 kg por adulto y suma de dimensiones ≤130 cm; cada viajero maneja su maleta.", comfort: "4/5", pros: ["Sin conexión", "Llega directamente a Kowloon", "Permite una mañana tranquila"], cons: ["Llegada nocturna", "Traslado largo desde Wulingyuan a la estación"], bookingUrl: "https://www.12306.cn/en/", sourceUrl: "https://us.trip.com/trains/china/route/zhangjiajie-to-hong-kong-west-kowloon/", recommended: true },
+      { id: "zjj-hk-flight", mode: "Vuelo", name: "Greater Bay Airlines · DYG→HKG directo", schedule: "La web oficial muestra septiembre/octubre; sin resultado para noviembre de 2026", doorToDoor: "≈5 h 30–6 h 30 hotel→hotel si vuelve a operar", groupPrice: 700, priceNote: "Referencia oficial desde HKD1,090 p/p en octubre; diciembre no disponible.", status: "NO_PUBLICADO", statusNote: "No comprar ni planificar alrededor de este vuelo mientras Greater Bay Airlines no publique inventario para diciembre.", luggage: "La franquicia depende de la tarifa elegida; comprobar maleta facturada y compra de equipaje en la web oficial.", comfort: "3/5", pros: ["Sería la opción más rápida", "Vuelo directo si se publica"], cons: ["Actualmente no aparece en noviembre", "Servicio estacional y precio incierto"], bookingUrl: "https://flights.greaterbay-airlines.com/en-hk/flights-from-zhangjiajie-to-hong-kong", sourceUrl: "https://flights.greaterbay-airlines.com/en-hk/flights-from-zhangjiajie-to-hong-kong" },
     ],
   },
   {
-    id: "sz-mo", date: "5 dic", from: "Shenzhen", to: "Macao",
-    why: "El ferry directo evita dos pasos terrestres y es especialmente lógico con Casa Real/Harbourview. El tren puede servir si el mar se suspende.",
+    id: "hk-mo", date: "5 dic", from: "Hong Kong", to: "Macao",
+    why: "El ferry desde Sheung Wan es la conexión más simple desde un hotel central. El bus HZMB queda como respaldo si el mar o el horario cambian.",
     options: [
-      { id: "sz-mo-ferry", mode: "Ferry", name: "TurboJET / operador asociado · Shekou→Outer Harbour", schedule: "Horario vigente desde 24 mar: 09:00, 11:00, 16:30; 18:30 fines de semana", doorToDoor: "≈3 h 15 hotel→hotel", groupPrice: 122, priceNote: "Presupuesto de 5 Economy; tarifa exacta para dic pendiente de checkout.", status: "NO_PUBLICADO", statusNote: "El servicio existe; venta/ajustes para el 5 dic todavía deben confirmarse.", luggage: "Equipaje sujeto a condiciones del operador; llegar con 45–60 min y declarar piezas grandes.", comfort: "4/5", pros: ["Directo", "Llega junto a hoteles de la península"], cons: ["Puede cambiar por mar/operación", "Límite de equipaje a confirmar"], bookingUrl: "https://www2.turbojet.com.hk/", sourceUrl: "https://www2.turbojet.com.hk/travel-with-us-sea-ferry/", recommended: true },
-      { id: "sz-mo-train", mode: "Tren", name: "HSR Shenzhen North→Zhuhai + cruce Gongbei", schedule: "Conexiones actuales vía Guangzhou South; horario del 5 dic no publicado", doorToDoor: "≈4–5 h hotel→hotel", groupPrice: 105, priceNote: "Presupuesto de tren + transporte local; no es billete directo único.", status: "NO_PUBLICADO", statusNote: "Comprar tramos en 12306 15 días antes.", luggage: "20 kg por adulto en tren; más escaleras, transbordo y control fronterizo.", comfort: "2/5", pros: ["Plan terrestre si se cancela el ferry", "Frecuencias ferroviarias altas"], cons: ["Transbordo", "Mala opción con 5 maletas"], bookingUrl: "https://www.12306.cn/en/", sourceUrl: "https://www.12306.cn/en/" },
+      { id: "hk-mo-ferry", mode: "Ferry", name: "TurboJET · Sheung Wan→Macao Outer Harbour", schedule: "Horario vigente desde 1 sep: 15:30, 16:00, 16:30, 17:30 y más salidas", doorToDoor: "≈3 h hotel→hotel", groupPrice: 136, priceNote: "HKD212 p/p de día en fin de semana; equipaje facturado aparte.", status: "VARIABLE", statusNote: "La tabla vigente desde septiembre cubre este patrón, pero el operador puede ajustarla; reconfirmar el 5 dic.", luggage: "1 pieza de mano ≤20 kg gratis. Maleta estándar facturada ≤20 kg: HKD35 por pieza; check-in 45–20 min antes.", comfort: "4/5", pros: ["Centro a centro", "Muchas salidas actuales", "Llega cerca del centro histórico"], cons: ["Las 5 maletas pagan check-in", "Puede alterarse por condiciones del mar"], bookingUrl: "https://www.turbojetbooking.com/", sourceUrl: "https://www2.turbojet.com.hk/travel-with-us-sea-ferry/", recommended: true },
+      { id: "hk-mo-bus", mode: "Autobús", name: "HZMB Shuttle Bus · Hong Kong Port→Macao Port", schedule: "Servicio 24 h; frecuencia alta durante el día", doorToDoor: "≈3 h 30–4 h 30 hotel→hotel", groupPrice: 122, priceNote: "HKD65 p/p de bus + reserva para taxi/metro en ambos extremos.", status: "VERIFICADO", statusNote: "El servicio y la tarifa diurna están publicados; los traslados urbanos siguen siendo estimados.", luggage: "Hay que bajar las 5 maletas para inmigración y volver a cargarlas; confirmar límites si aumenta el equipaje.", comfort: "3/5", pros: ["No depende del mar", "Salida flexible"], cons: ["No es centro a centro", "Dos traslados locales y controles"], bookingUrl: "https://www.hzmbus.com/en/", sourceUrl: "https://www.hzmbus.com/en/message.html?tab=1" },
     ],
   },
   {
-    id: "mo-hk", date: "6 dic", from: "Macao", to: "Hong Kong",
-    why: "Outer Harbour→Sheung Wan minimiza movimientos si se mantiene Casa Real. Cotai Water Jet mejora si se hace el upgrade al Parisian.",
+    id: "mo-sz", date: "6 dic", from: "Macao", to: "Shenzhen",
+    why: "El ferry directo Outer Harbour→Shekou evita volver por Hong Kong o hacer transbordo ferroviario en Guangzhou. La ruta terrestre queda como plan B.",
     options: [
-      { id: "mo-hk-turbo", mode: "Ferry", name: "TurboJET · Outer Harbour→Sheung Wan", schedule: "Horario vigente desde 1 sep incluye 12:30, 13:00, 14:00…", doorToDoor: "≈3 h hotel→hotel", groupPrice: 124, priceNote: "HKD194 p/p de día de fin de semana, presupuesto convertido.", status: "VARIABLE", statusNote: "Tabla vigente cubre la fecha, pero el operador advierte ajustes; reconfirmar.", luggage: "Equipaje grande puede requerir check-in y cargo; no llegar al último minuto.", comfort: "4/5", pros: ["Mejor con hotel en la península", "Llega a Central"], cons: ["Mar y equipaje", "Formalidades en ambas terminales"], bookingUrl: "https://www2.turbojet.com.hk/", sourceUrl: "https://www2.turbojet.com.hk/travel-with-us-sea-ferry/", recommended: true },
-      { id: "mo-hk-cotai", mode: "Ferry", name: "Cotai Water Jet · Taipa→Sheung Wan", schedule: "Horario vigente con salidas diurnas; elegir 12:30/13:30 según inventario", doorToDoor: "≈3 h 30 desde península; ≈2 h 45 desde Cotai", groupPrice: 150, priceNote: "HKD209 p/p fin de semana + reserva para equipaje facturado.", status: "VARIABLE", statusNote: "Servicio y precio vigentes; confirmar asiento del 6 dic.", luggage: "1 pieza de mano ≤20 kg y 56×36×23 cm; hasta 2 facturadas con reserva previa y cargo desde HKD25.", comfort: "4/5", pros: ["Ideal con Parisian", "Regla de equipaje publicada"], cons: ["Peor desde Casa Real", "Reservar maletas antes de las 16:00 del día previo"], bookingUrl: "https://www.cotaiwaterjet.com/ferry-schedule/hongkong-macau-taipa.html", sourceUrl: "https://www.cotaiwaterjet.com/ferry-schedule/hongkong-macau-taipa.html" },
-      { id: "mo-hk-bus", mode: "Autobús", name: "HZMB Shuttle Bus · puertos Macao↔Hong Kong", schedule: "24 h; cada 5–10 min gran parte del día", doorToDoor: "≈3–4 h hotel→hotel", groupPrice: 122, priceNote: "MOP65 p/p + presupuesto para taxi/metro en ambos extremos.", status: "VERIFICADO", statusNote: "Frecuencia y tarifa diurna publicadas por el operador.", luggage: "Más tolerante que el ferry, pero hay que descargar y cruzar controles con las 5 maletas.", comfort: "3/5", pros: ["No depende del mar", "Mucha frecuencia"], cons: ["No es centro a centro", "Dos conexiones locales"], bookingUrl: "https://www.hzmbus.com/en/", sourceUrl: "https://www.hzmbus.com/en/message.html?tab=1" },
+      { id: "mo-sz-ferry", mode: "Ferry", name: "TurboJET/operador asociado · Outer Harbour→Shekou", schedule: "Horario vigente desde 5 sep: 12:30 y 18:00 · navegación ≈60 min", doorToDoor: "≈3 h 30 hotel→hotel", groupPrice: 190, priceNote: "HKD296 p/p Economy; cinco billetes ≈US$190. Maletas aparte.", status: "VARIABLE", statusNote: "Horario y tarifa publicados en 2026; reconfirmar que la salida del 6 dic siga a la venta antes de cerrar actividades.", luggage: "1 pieza de mano ≤20 kg gratis; maleta estándar facturada ≤20 kg: MOP/RMB25. Se exige nombre, documento original y check-in 45–20 min antes.", comfort: "4/5", pros: ["Directo a Shenzhen", "Evita dos fronteras terrestres", "La salida de 18:00 permite aprovechar Macao"], cons: ["Solo dos salidas en el patrón vigente", "Traslado Shekou→Futian con tráfico"], bookingUrl: "https://www.turbojetbooking.com/", sourceUrl: "https://www2.turbojet.com.hk/travel-with-us-sea-ferry/", recommended: true },
+      { id: "mo-sz-train", mode: "Tren", name: "Cruce Gongbei + HSR Zhuhai→Shenzhen vía Guangzhou South", schedule: "Conexiones frecuentes, pero el horario del 6 dic aún no está publicado", doorToDoor: "≈5–6 h hotel→hotel", groupPrice: 125, priceNote: "Presupuesto de taxis, dos trenes y controles; no es un billete directo.", status: "NO_PUBLICADO", statusNote: "Comprar los tramos en 12306 cuando abra la fecha. Usar solo si el ferry no opera.", luggage: "20 kg por adulto en tren; hay que mover todo en frontera, estaciones y transbordo.", comfort: "2/5", pros: ["Plan terrestre", "Más alternativas si se cancela el mar"], cons: ["Transbordo en Guangzhou South", "Muy incómodo con 5 maletas"], bookingUrl: "https://www.12306.cn/en/", sourceUrl: "https://www.12306.cn/en/" },
     ],
   },
   {
-    id: "hk-sh", date: "9 dic", from: "Hong Kong", to: "Shanghái",
-    why: "El vuelo conserva la tarde final y deja una noche de margen antes del JFK. El tren de día llega demasiado tarde para aprovechar Shanghái.",
+    id: "sz-sh", date: "9 dic", from: "Shenzhen", to: "Shanghái",
+    why: "Un vuelo matutino a Hongqiao conserva la tarde final y deja una noche de margen antes del JFK. El HSR es viable, pero consume casi todo el día.",
     options: [
-      { id: "hk-sh-flight", mode: "Vuelo", name: "China Eastern MU724 · HKG→PVG", schedule: "Patrón vigente: 09:45–12:25", doorToDoor: "≈6 h 40 hotel→hotel", groupPrice: 650, priceNote: "$130 p/p de presupuesto; tarifa exacta variable.", status: "VARIABLE", statusNote: "Número y hora observados actualmente; confirmar el 9 dic en el enlace.", luggage: "China Eastern publica 2×23 kg para Economy no branded en varias rutas, pero Basic depende del billete: leer el checkout.", comfort: "3/5", pros: ["Conserva la tarde", "Protege el vuelo internacional del día siguiente"], cons: ["Aeropuertos lejanos", "La franquicia depende de tarifa"], bookingUrl: "https://www.google.com/travel/flights?q=Flights%20from%20HKG%20to%20PVG%20on%202026-12-09", sourceUrl: "https://www.flight.info/MU724", recommended: true },
-      { id: "hk-sh-train", mode: "Tren", name: "HSR West Kowloon→Shanghai Hongqiao", schedule: "Servicio diurno actual ≈8 h 08; horario del 9 dic no publicado", doorToDoor: "≈10 h 15 hotel→hotel", groupPrice: 625, priceNote: "Presupuesto de 2ª clase a partir de tarifas actuales.", status: "NO_PUBLICADO", statusNote: "La venta abre normalmente 15 días antes; confirmar requisitos migratorios de West Kowloon.", luggage: "20 kg por adulto, 130 cm lineales, sin facturación.", comfort: "4/5", pros: ["Evita vuelo", "Asiento amplio"], cons: ["Pierde la última tarde", "Llegada nocturna antes del JFK"], bookingUrl: "https://www.12306.cn/en/", sourceUrl: "https://www.highspeed.mtr.com.hk/en/ticket/ticket-purchase-channels.html" },
+      { id: "sz-sh-flight", mode: "Vuelo", name: "Vuelo directo Shenzhen→Shanghai · SZX→SHA preferido", schedule: "Ruta diaria ≈2 h 20; buscar salida 08:00–10:30 el 9 dic", doorToDoor: "≈5 h 45–6 h 30 hotel→hotel", groupPrice: 500, priceNote: "US$100 p/p de presupuesto; se observaron tarifas desde ~US$73 cerca del 10 dic.", status: "VARIABLE", statusNote: "Hay muchas frecuencias directas, pero el precio, número y equipaje del 9 dic deben confirmarse en el checkout. Priorizar SHA para llegar al centro.", luggage: "No elegir Basic sin comprobar 1 maleta facturada por persona. Reservar espacio para compras y baterías solo en cabina.", comfort: "3/5", pros: ["Conserva la tarde final", "Hongqiao queda más cerca del centro", "Muchas frecuencias"], cons: ["Equipaje puede elevar el precio", "Tráfico hacia SZX"], bookingUrl: "https://www.google.com/travel/flights?q=Flights%20from%20SZX%20to%20SHA%20on%202026-12-09", sourceUrl: "https://www.google.com/travel/flights/flights-from-shenzhen-to-shanghai.html", recommended: true },
+      { id: "sz-sh-train", mode: "Tren", name: "HSR Shenzhen North→Shanghai Hongqiao", schedule: "Trenes actuales desde ≈6 h 34; horario del 9 dic no publicado", doorToDoor: "≈8 h 30–10 h hotel→hotel", groupPrice: 650, priceNote: "≈US$130 p/p en el tren más rápido observado; servicios lentos cuestan menos.", status: "NO_PUBLICADO", statusNote: "12306 todavía no vende el 9 dic. Elegir solo un servicio que llegue con margen para dormir antes del vuelo internacional.", luggage: "20 kg por adulto y suma de dimensiones ≤130 cm; sin facturación y con todas las compras a bordo.", comfort: "4/5", pros: ["Evita aeropuerto", "Equipaje sin tarifa por pieza"], cons: ["Pierde casi toda la última jornada", "Riesgo de llegada tarde antes del JFK"], bookingUrl: "https://www.12306.cn/en/", sourceUrl: "https://us.trip.com/trains/china/route/shenzhen-to-shanghai/" },
     ],
   },
 ];
@@ -660,30 +659,94 @@ const expandedAttractionSeeds: ExpandedAttractionSeed[] = [
   { id: "hk-shopping-malls", city: "hongkong", name: "K11 MUSEA + Harbour City + Causeway Bay", category: "Compras", image: "/attractions/hk-light.webp", area: "Tsim Sha Tsui / Causeway Bay", time: "15:00", duration: 4, pricePerPerson: 0, priceLabel: "Acceso gratuito; compras aparte", status: "VERIFICADO", description: "Comparación de grandes centros para marcas, diseño, electrónica oficial y ropa: K11/Harbour City en Kowloon o Times Square/Hysan en Causeway Bay. Elegir una zona, no cruzar el puerto solo para repetir tiendas.", bookingUrl: "https://www.discoverhongkong.com/eng/shopping.html", sourceUrl: "https://www.discoverhongkong.com/eng/shopping.html", recommendedTime: "15:00–19:00; compras finales", images: ["/attractions/hk-light.webp", "/attractions/hk-star-ferry.jpg"] },
 ];
 
-const attractionGallery: Record<CityId, string[]> = {
-  shanghai: ["/attractions/sh-huangpu.webp", "/attractions/sh-tower.webp", "/attractions/sh-museum-east.jpg"],
-  zhangjiajie: ["/attractions/zjj-yuan.webp", "/attractions/zjj-tianzi.webp", "/attractions/zjj-golden.webp"],
-  shenzhen: ["/attractions/sz-hqb.webp", "/attractions/sz-ping.webp", "/attractions/sz-seaworld-art.jpg"],
-  macau: ["/attractions/mo-ruins.webp", "/attractions/mo-teamlab.jpg", "/attractions/mo-water-show.jpg"],
-  hongkong: ["/attractions/hk-light.webp", "/attractions/hk-star-ferry.jpg", "/attractions/hk-peak.webp"],
+// Only use an image when it depicts the attraction itself. The previous
+// city-wide fallback mixed unrelated landmarks into otherwise useful cards.
+const attractionImageOverrides: Record<string, string> = {
+  "sh-nanjing": "/attractions/sh-nanjing.webp",
+  "sh-city-god": "/attractions/sh-city-god.webp",
+  "sh-tianzifang": "/attractions/sh-tianzifang.webp",
+  "sh-xintiandi": "/attractions/sh-xintiandi.webp",
+  "sh-jingan": "/attractions/sh-jingan.webp",
+  "sh-oriental-pearl": "/attractions/sh-oriental-pearl.webp",
+  "sh-sightseeing-bus": "/attractions/sh-sightseeing-bus.webp",
+  "sh-museum-peoples": "/attractions/sh-museum-peoples.webp",
+  "sh-peoples-park": "/attractions/sh-peoples-park.webp",
+  "sh-food": "/attractions/sh-food.webp",
+  "sh-m50": "/attractions/sh-m50.webp",
+  "sh-jade-buddha": "/attractions/sh-jade-buddha.webp",
+  "sh-wildlife": "/attractions/sh-wildlife.webp",
+  "zjj-show": "/attractions/zjj-show.webp",
+  "zjj-ten-mile": "/attractions/zjj-ten-mile.webp",
+  "zjj-wulingyuan-town": "/attractions/zjj-wulingyuan-town.webp",
+  "zjj-fox-fairy": "/attractions/zjj-fox-fairy.webp",
+  "sz-splendid": "/attractions/sz-splendid.webp",
+  "sz-civic": "/attractions/sz-civic.webp",
+  "sz-talent-park": "/attractions/sz-talent.webp",
+  "sz-dongmen": "/attractions/sz-dongmen.webp",
+  "sz-nantou": "/attractions/sz-nantou.webp",
+  "sz-seaworld-night": "/attractions/sz-seaworld-night.webp",
+  "mo-wynn": "/attractions/mo-wynn.webp",
+  "mo-cotai-resorts": "/attractions/mo-cotai.webp",
+  "mo-lrt": "/attractions/mo-lrt.webp",
+  "mo-panda": "/attractions/mo-panda.webp",
+  "mo-taipa": "/attractions/mo-taipa.webp",
+  "mo-ama-mandarin": "/attractions/mo-ama-mandarin.webp",
+  "mo-resort-pool": "/attractions/mo-resort-pool.webp",
+  "hk-avenue-stars": "/attractions/hk-avenue-stars.webp",
+  "hk-tram-wanchai": "/attractions/hk-tram.webp",
+  "hk-escalator": "/attractions/hk-escalator.webp",
+  "hk-sham-shui-po": "/attractions/hk-sham-shui-po.webp",
+  "hk-stanley": "/attractions/hk-stanley.webp",
+  "hk-big-bus": "/attractions/hk-big-bus.webp",
+  "hk-lkf": "/attractions/hk-lkf.webp",
+  "hk-shopping-malls": "/attractions/hk-shopping.webp",
+  "hk-food-route": "/attractions/hk-food.webp",
+};
+
+const attractionSpecificGalleries: Record<string, string[]> = {
+  "sh-bund": ["/attractions/sh-huangpu.webp", "/attractions/sh-tower.webp"],
+  "sh-lujiazui": ["/attractions/sh-tower.webp", "/attractions/sh-huangpu.webp"],
+  "zjj-park": ["/attractions/zjj-yuan.webp", "/attractions/zjj-tianzi.webp", "/attractions/zjj-golden.webp"],
+  "zjj-yuanjiajie": ["/attractions/zjj-yuan.webp", "/attractions/zjj-bailong.webp"],
+  "mo-cotai-resorts": ["/attractions/mo-cotai.webp", "/attractions/mo-wynn.webp", "/attractions/mo-2049.jpg"],
+  "hk-avenue-stars": ["/attractions/hk-avenue-stars.webp", "/attractions/hk-light.webp", "/attractions/hk-star.webp"],
 };
 
 const defaultExpandedDay: Record<CityId, string> = {
-  shanghai: "2026-11-27", zhangjiajie: "2026-11-30", shenzhen: "2026-12-03", macau: "2026-12-05", hongkong: "2026-12-07",
+  shanghai: "2026-11-27", zhangjiajie: "2026-11-30", hongkong: "2026-12-03", macau: "2026-12-05", shenzhen: "2026-12-07",
+};
+
+const attractionDayOverrides: Record<string, string> = {
+  "hk-symphony": "2026-12-03", "hk-peak": "2026-12-03", "hk-space": "2026-12-03", "hk-palace": "2026-12-03",
+  "hk-star-ferry": "2026-12-03", "hk-temple-street": "2026-12-03", "hk-mplus": "2026-12-04", "hk-ngong": "2026-12-04",
+  "hk-aqualuna": "2026-12-04", "hk-disney": "2026-12-04", "hk-ocean-park": "2026-12-04",
+  "sz-hqb": "2026-12-07", "sz-ping": "2026-12-07", "sz-science": "2026-12-08", "sz-dji": "2026-12-08",
+  "sz-window": "2026-12-08", "sz-splendid": "2026-12-08", "sz-seaworld-art": "2026-12-08", "sz-dafen": "2026-12-08",
+};
+
+const attractionDescriptionOverrides: Record<string, string> = {
+  "hk-sham-shui-po": "Primera ronda de comparación para PC, videojuegos, cables, cámaras y electrónica nueva/usada. Golden Computer concentra hardware; Apliu Street exige revisar estado. Anotar precios y garantías para compararlos después con Shenzhen.",
+  "hk-shopping-malls": "Comparación de grandes centros para marcas, diseño, electrónica oficial y ropa: K11/Harbour City en Kowloon o Times Square/Hysan en Causeway Bay. Elegir una zona y comprar solo si la ventaja compensa llevarlo por Macao y Shenzhen.",
 };
 
 const normalizedBaseAttractions: Attraction[] = baseAttractions.map((item) => {
-  const image = item.image.startsWith("https://") ? `/attractions/${item.id}.jpg` : item.image;
-  return { ...item, image, area: item.area ?? cityName(item.city), recommendedTime: item.recommendedTime ?? item.time, images: item.images ?? [image, ...attractionGallery[item.city].filter((photo) => photo !== image).slice(0, 2)] };
+  const fallbackImage = item.image.startsWith("https://") ? `/attractions/${item.id}.jpg` : item.image;
+  const image = attractionImageOverrides[item.id] ?? fallbackImage;
+  return { ...item, day: attractionDayOverrides[item.id] ?? item.day, image, area: item.area ?? cityName(item.city), recommendedTime: item.recommendedTime ?? item.time, images: attractionSpecificGalleries[item.id] ?? [image] };
 });
 
-const expandedAttractions: Attraction[] = expandedAttractionSeeds.map((item) => ({
-  ...item,
-  day: defaultExpandedDay[item.city],
-  booking: item.booking ?? (item.pricePerPerson ? "Revisar disponibilidad y condición de entrada antes de pagar." : "No requiere reserva general; confirmar horario vigente."),
-  recommendation: item.recommendation ?? "Muy recomendable",
-  images: item.images ?? [item.image, ...attractionGallery[item.city].filter((photo) => photo !== item.image).slice(0, 2)],
-}));
+const expandedAttractions: Attraction[] = expandedAttractionSeeds.map((item) => {
+  const image = attractionImageOverrides[item.id] ?? item.image;
+  return {
+    ...item,
+    image,
+    description: attractionDescriptionOverrides[item.id] ?? item.description,
+    day: defaultExpandedDay[item.city],
+    booking: item.booking ?? (item.pricePerPerson ? "Revisar disponibilidad y condición de entrada antes de pagar." : "No requiere reserva general; confirmar horario vigente."),
+    recommendation: item.recommendation ?? "Muy recomendable",
+    images: attractionSpecificGalleries[item.id] ?? [image],
+  };
+});
 
 export const attractions: Attraction[] = [...normalizedBaseAttractions, ...expandedAttractions];
 
@@ -734,24 +797,24 @@ export const tripDays: TripDay[] = [
   { date: "2026-11-29", label: "Dom 29 nov", city: "zhangjiajie", title: "Pilares de arenisca", baseEvents: [{ time: "06:45", title: "Desayuno y salida" }, { time: "12:30", title: "Almuerzo dentro del parque" }, { time: "18:30", title: "Cena y recuperación" }] },
   { date: "2026-11-30", label: "Lun 30 nov", city: "zhangjiajie", title: "Cañón y show", baseEvents: [{ time: "07:30", title: "Desayuno" }, { time: "14:30", title: "Regreso / descanso" }, { time: "17:45", title: "Cena temprana" }] },
   { date: "2026-12-01", label: "Mar 1 dic", city: "zhangjiajie", title: "Tianmen Mountain", baseEvents: [{ time: "06:30", title: "Salida Wulingyuan→ciudad" }, { time: "13:00", title: "Almuerzo según ruta" }, { time: "18:30", title: "Cena y hacer maletas" }] },
-  { date: "2026-12-02", label: "Mié 2 dic", city: "shenzhen", title: "Mañana flexible y traslado", baseEvents: [{ time: "08:00", title: "Desayuno y check‑out" }, { time: "13:00", title: "Almuerzo + recoger equipaje" }, { time: "23:15", title: "Check‑in en Shenzhen", note: "Con vuelo; el tren cambia toda la secuencia." }] },
-  { date: "2026-12-03", label: "Jue 3 dic", city: "shenzhen", title: "Día de compra tecnológica", baseEvents: [{ time: "08:30", title: "Desayuno + lista cerrada de modelos" }, { time: "13:00", title: "Almuerzo; no comprar impulsivamente" }, { time: "19:30", title: "Cena y registrar recibos/series" }] },
-  { date: "2026-12-04", label: "Vie 4 dic", city: "shenzhen", title: "Ciencia, DJI o parque", baseEvents: [{ time: "08:00", title: "Desayuno" }, { time: "13:30", title: "Almuerzo y traslado" }, { time: "20:00", title: "Cena y cerrar equipaje" }] },
-  { date: "2026-12-05", label: "Sáb 5 dic", city: "macau", title: "Macao: cultura y gran show", baseEvents: [{ time: "07:30", title: "Check‑out y traslado a Shekou" }, { time: "10:00", title: "Ferry/cruce seleccionado", note: "La hora exacta depende de la venta de diciembre." }, { time: "13:30", title: "Almuerzo macaense" }, { time: "17:30", title: "Check‑in/descanso y cena temprana" }] },
-  { date: "2026-12-06", label: "Dom 6 dic", city: "hongkong", title: "Macao breve y llegada a Hong Kong", baseEvents: [{ time: "08:30", title: "Desayuno y check‑out" }, { time: "13:30", title: "Cruce a Hong Kong", note: "Ajustar según la actividad matutina y terminal." }, { time: "17:30", title: "Cena en Kowloon" }] },
-  { date: "2026-12-07", label: "Lun 7 dic", city: "hongkong", title: "Vistas y ciencia", baseEvents: [{ time: "08:00", title: "Desayuno" }, { time: "12:00", title: "Dim sum" }, { time: "18:30", title: "Cena" }] },
-  { date: "2026-12-08", label: "Mar 8 dic", city: "hongkong", title: "Lantau o Disneyland", baseEvents: [{ time: "08:00", title: "Desayuno" }, { time: "13:00", title: "Almuerzo según opción" }, { time: "21:00", title: "Volver y pesar maletas", critical: true }] },
-  { date: "2026-12-09", label: "Mié 9 dic", city: "shanghai", title: "Regreso a Shanghái", baseEvents: [{ time: "06:15", title: "Salida del hotel con 5 maletas" }, { time: "14:30", title: "Check‑in final en Shanghái" }, { time: "18:30", title: "Cena de despedida" }, { time: "21:00", title: "Documentos y maletas cerradas", critical: true }] },
+  { date: "2026-12-02", label: "Mié 2 dic", city: "hongkong", title: "Zhangjiajie→Hong Kong", baseEvents: [{ time: "08:00", title: "Desayuno y check‑out" }, { time: "12:30", title: "Traslado a Zhangjiajie West" }, { time: "15:10", title: "Tren directo hacia West Kowloon", note: "Hora del patrón actual; el billete del 2 dic todavía no está a la venta." }, { time: "22:45", title: "Check‑in en Hong Kong", note: "Avisar al hotel de la llegada tardía." }] },
+  { date: "2026-12-03", label: "Jue 3 dic", city: "hongkong", title: "Victoria Peak, puerto y Kowloon", baseEvents: [{ time: "08:00", title: "Desayuno" }, { time: "12:00", title: "Dim sum" }, { time: "18:30", title: "Cena cerca del puerto" }] },
+  { date: "2026-12-04", label: "Vie 4 dic", city: "hongkong", title: "Lantau, Ocean Park o museo", baseEvents: [{ time: "08:00", title: "Desayuno" }, { time: "13:00", title: "Almuerzo según opción" }, { time: "20:30", title: "Regreso y preparar las 5 maletas" }] },
+  { date: "2026-12-05", label: "Sáb 5 dic", city: "macau", title: "Hong Kong→Macao", baseEvents: [{ time: "08:00", title: "Desayuno, check‑out y consigna" }, { time: "14:30", title: "Llegar a la terminal de Sheung Wan" }, { time: "15:30", title: "Ferry a Macao", note: "Patrón vigente; reconfirmar la salida exacta del 5 dic." }, { time: "18:30", title: "Check‑in y cena macaense" }] },
+  { date: "2026-12-06", label: "Dom 6 dic", city: "shenzhen", title: "Macao→Shenzhen", baseEvents: [{ time: "08:00", title: "Desayuno y check‑out" }, { time: "09:00", title: "Patrimonio o experiencia breve" }, { time: "16:45", title: "Check-in del ferry con 5 maletas" }, { time: "18:00", title: "Ferry Outer Harbour→Shekou", note: "Horario vigente desde septiembre; reconfirmar venta para diciembre." }, { time: "20:30", title: "Check‑in en Shenzhen" }] },
+  { date: "2026-12-07", label: "Lun 7 dic", city: "shenzhen", title: "Compra tecnológica con método", baseEvents: [{ time: "08:30", title: "Desayuno + lista cerrada de modelos" }, { time: "13:00", title: "Almuerzo; comparar antes de pagar" }, { time: "19:30", title: "Cena y registrar recibos/series" }] },
+  { date: "2026-12-08", label: "Mar 8 dic", city: "shenzhen", title: "Ciencia, DJI y compras finales", baseEvents: [{ time: "08:00", title: "Desayuno" }, { time: "13:30", title: "Almuerzo y segunda ronda" }, { time: "20:00", title: "Cerrar compras y pesar las maletas", critical: true }] },
+  { date: "2026-12-09", label: "Mié 9 dic", city: "shanghai", title: "Shenzhen→Shanghái", baseEvents: [{ time: "06:30", title: "Salida del hotel con 5 maletas" }, { time: "13:30", title: "Check‑in final en Shanghái" }, { time: "18:30", title: "Cena de despedida" }, { time: "21:00", title: "Documentos y maletas cerradas", critical: true }] },
   { date: "2026-12-10", label: "Jue 10 dic", city: "transito", title: "Vuelo de regreso", baseEvents: [{ time: "09:00", title: "Desayuno y check‑out" }, { time: "10:00", title: "Salida hacia PVG", note: "Margen amplio para vuelo internacional." }, { time: "14:00", title: "PVG→JFK" }, { time: "19:30", title: "Llegada programada a JFK", note: "Mismo día por cambio horario." }] },
 ];
 
 export const shoppingGuide = [
-  { category: "Electrónica y componentes", bestCity: "Shenzhen · Huaqiangbei", when: "3 dic", action: "Comparar por la mañana, probar por la tarde y pedir factura con modelo/serie. Evitar accesorios sin certificación.", warning: "La garantía puede ser solo China; confirmar idioma, bandas, enchufe y devolución.", source: "https://www.eyeshenzhen.com/content/2025-07/03/content_31595461.htm" },
-  { category: "Drones y cámaras DJI", bestCity: "Shenzhen · tienda oficial DJI", when: "4 dic", action: "Comprar solo en tienda oficial/autorizada si el precio y garantía regional convienen. Guardar batería y repuestos en cabina.", warning: "Baterías sueltas van en equipaje de mano; ≤100 Wh normalmente permitido. No volar el dron sin revisar reglas locales.", source: "https://www.dji.com/where-to-buy/flagship/cn-sz" },
-  { category: "Moda accesible", bestCity: "Hong Kong · Sham Shui Po/Mong Kok o Shenzhen · Dongmen", when: "7–8 dic", action: "Dejar prendas voluminosas para Hong Kong, al final. En Shenzhen solo comprar si hay ventaja clara de talla/precio.", warning: "Probar tallas; políticas de devolución en mercados pueden ser limitadas.", source: "https://www.discoverhongkong.com/eng/explore/shopping.html" },
-  { category: "Diseñador auténtico", bestCity: "Hong Kong · tiendas oficiales/outlets", when: "7–8 dic", action: "Usar boutiques o distribuidores autorizados y conservar recibos para aduana.", warning: "Comparar precio final con EE. UU.; no asumir ventaja fiscal.", source: "https://www.discoverhongkong.com/eng/explore/shopping.html" },
+  { category: "Electrónica y componentes", bestCity: "Shenzhen · Huaqiangbei", when: "7–8 dic", action: "Usar Hong Kong solo para tomar precios de referencia y hacer la compra principal en Shenzhen: comparar, probar y pedir factura con modelo/serie.", warning: "La garantía puede ser solo China; confirmar idioma, bandas, enchufe y devolución.", source: "https://www.eyeshenzhen.com/content/2025-07/03/content_31595461.htm" },
+  { category: "Drones y cámaras DJI", bestCity: "Shenzhen · tienda oficial DJI", when: "8 dic", action: "Comprar al final en tienda oficial/autorizada si precio y garantía regional convienen. Guardar baterías y repuestos en cabina.", warning: "Baterías sueltas van en equipaje de mano; ≤100 Wh normalmente permitido. No volar el dron sin revisar reglas locales.", source: "https://www.dji.com/where-to-buy/flagship/cn-sz" },
+  { category: "Moda accesible", bestCity: "Shenzhen · Dongmen", when: "8 dic", action: "Mirar estilos y tallas en Hong Kong, pero dejar las compras voluminosas para Dongmen, ya casi al final del viaje.", warning: "Probar tallas; políticas de devolución en mercados pueden ser limitadas.", source: "https://www.eyeshenzhen.com/content/2016-09/20/content_13883055.htm" },
+  { category: "Diseñador auténtico", bestCity: "Hong Kong · tiendas oficiales/outlets", when: "3–4 dic", action: "Usar boutiques o distribuidores autorizados y comprar solo si la ventaja compensa transportar la pieza por Macao y Shenzhen.", warning: "Comparar precio final con EE. UU.; no asumir ventaja fiscal.", source: "https://www.discoverhongkong.com/eng/explore/shopping.html" },
   { category: "Réplicas / falsificaciones", bestCity: "No recomendado", when: "—", action: "No comprar. Sustituir por marcas locales, segunda mano autenticada o diseño sin logotipo falso.", warning: "CBP puede incautar falsificaciones; la exención personal es limitada y no elimina el riesgo.", source: "https://www.cbp.gov/trade/fakegoodsrealdangers" },
-  { category: "Souvenirs y comida envasada", bestCity: "Macao + Shanghái final", when: "5 y 9 dic", action: "Comprar piezas específicas de Macao allí; dejar regalos genéricos y empaquetado final para Shanghái.", warning: "Declarar alimentos; evitar carne, fruta fresca y productos sin etiqueta.", source: "https://www.cbp.gov/travel/us-citizens/know-before-you-go/prohibited-and-restricted-items" },
+  { category: "Souvenirs y comida envasada", bestCity: "Macao + Shanghái final", when: "5–6 y 9 dic", action: "Comprar solo recuerdos específicos de Macao; dejar regalos genéricos y empaquetado final para Shanghái.", warning: "Declarar alimentos; evitar carne, fruta fresca y productos sin etiqueta.", source: "https://www.cbp.gov/travel/us-citizens/know-before-you-go/prohibited-and-restricted-items" },
 ];
 
 export const shoppingPlaces: Array<{
@@ -772,13 +835,13 @@ export const shoppingPlaces: Array<{
   { city: "shenzhen", name: "Dongmen Market + Clothing City", specialty: "Ropa económica, zapatos, maletas y accesorios", area: "Dongmen Pedestrian Street / Luohu", buy: "Buscar prendas sin logotipos falsos, probar tallas y comparar dentro de Baima, Foreign Trade Clothing City y Junma.", verify: "La calidad y devolución varían por puesto. Revisar costuras, cremalleras y composición antes de pagar.", timing: "Tarde/noche; solo lo que tenga ventaja clara", status: "VERIFICADO", source: "https://www.eyeshenzhen.com/content/2016-09/20/content_13883055.htm" },
   { city: "shanghai", name: "Qipu Road Clothing Wholesale Market", specialty: "Moda económica y mayorista", area: "Qipu Road / Tiantong Road", buy: "Solo para una búsqueda dirigida de ropa barata sin marca. Comparar calidad y precio con Dongmen antes de cargar más equipaje.", verify: "Opiniones recientes son mixtas y hay riesgo de falsificaciones; retirarse ante presión de venta y no comprar marcas copiadas.", timing: "Solo si sobra tiempo el 9 dic", status: "VARIABLE", source: "https://goshopshanghai.com/sever-pu-road-197.html" },
   { city: "shanghai", name: "Nanjing East Road", specialty: "Marcas oficiales, grandes almacenes y regalos", area: "Nanjing East Road / People's Square", buy: "Útil para compras finales con recibo, tallas previsibles y empaquetado; no asumir que será más barato que EE. UU.", verify: "Comparar precio final, devolución y garantía. Priorizar tiendas oficiales.", timing: "Última tarde en Shanghái", status: "VERIFICADO", source: "https://www.meet-in-shanghai.net/en/huangpu-district/nanjing-road-856210/" },
-  { city: "hongkong", name: "Golden Computer Centre & Arcade", specialty: "RAM, SSD, PC, gaming, software y periféricos", area: "Sham Shui Po · Fuk Wa Street", buy: "Buena segunda referencia después de Shenzhen para componentes con precios visibles y más tiendas establecidas.", verify: "Confirmar si el producto es distribución Hong Kong, garantía, voltaje y política por fallo al llegar.", timing: "Al final del viaje, antes de cerrar maletas", status: "VERIFICADO", source: "https://www.discoverhongkong.com/eng/place-to-go/travel.guide-golden-computer-centre-and-arcade.html" },
+  { city: "hongkong", name: "Golden Computer Centre & Arcade", specialty: "RAM, SSD, PC, gaming, software y periféricos", area: "Sham Shui Po · Fuk Wa Street", buy: "Usarlo como primera referencia de precios y garantía antes de la compra principal en Shenzhen.", verify: "Confirmar si el producto es distribución Hong Kong, garantía, voltaje y política por fallo al llegar.", timing: "Primera comparación, antes de Shenzhen", status: "VERIFICADO", source: "https://www.discoverhongkong.com/eng/place-to-go/travel.guide-golden-computer-centre-and-arcade.html" },
   { city: "hongkong", name: "Apliu Street", specialty: "Accesorios, cámaras usadas, audio, cables y piezas", area: "Sham Shui Po", buy: "Ideal para artículos pequeños, repuestos y segunda mano que se puedan inspeccionar en el momento.", verify: "No pagar precio de producto nuevo por equipo usado; probarlo y evitar baterías sin marca o sin Wh impreso.", timing: "Combinar con Golden Computer", status: "VERIFICADO", source: "https://www.discoverhongkong.com/eng/place-to-go/travel.guide-apliu-street.html" },
   { city: "hongkong", name: "Mong Kok Computer Centre", specialty: "Ordenadores, cámaras, almacenamiento y accesorios", area: "Nelson Street / Mong Kok", buy: "Alternativa compacta si el hotel está en Mong Kok y no se quiere ir a Sham Shui Po.", verify: "Comparar con Golden y tiendas oficiales; pedir recibo y número de serie.", timing: "Noche de Mong Kok", status: "VERIFICADO", source: "https://www.expedia.com/Mong-Kok-Computer-Centre-Mong-Kok.d6124677.Vacation-Attraction" },
   { city: "hongkong", name: "Citygate Outlets", specialty: "Ropa deportiva, infantil y diseñador con descuento", area: "Tung Chung · junto a MTR", buy: "La mejor parada de ropa de marca al final; hay más de 150 marcas y se combina con Ngong Ping o el aeropuerto.", verify: "Comprobar talla, condición outlet y política de cambio. No asumir 30–70% en cada artículo.", timing: "Día de Lantau, después del teleférico", status: "VERIFICADO", source: "https://www.citygateoutlets.com.hk/en/" },
   { city: "hongkong", name: "Sneakers Street · Fa Yuen Street", specialty: "Zapatillas y ropa deportiva", area: "Mong Kok", buy: "Comparar tiendas autorizadas para modelos actuales y ediciones especiales; se combina con Ladies' Market.", verify: "Pedir recibo, revisar ambas zapatillas y talla antes de salir. Evitar vendedores sin local para marcas caras.", timing: "Última noche de compras", status: "VERIFICADO", source: "https://www.discoverhongkong.com/eng/place-to-go/travel.guide-sneakers-street.html" },
   { city: "hongkong", name: "Ladies' Market", specialty: "Ropa barata, accesorios y souvenirs", area: "Tung Choi Street / Mong Kok", buy: "Útil para prendas sin marca y recuerdos pequeños; comparar varios puestos y negociar con calma.", verify: "Evitar logotipos falsos y revisar calidad. La devolución normalmente no existe.", timing: "Después de cenar en Kowloon", status: "VERIFICADO", source: "https://www.discoverhongkong.com/eng/shopping/snag-the-best-bargain-souvenirs-at-hong-kong-s-street-markets.html" },
-  { city: "hongkong", name: "Temple Street Night Market", specialty: "Souvenirs, camisetas, artesanía y accesorios", area: "Jordan / Yau Ma Tei", buy: "Mejor como experiencia de cena y mercado que como destino de tecnología seria.", verify: "Comparar puestos, negociar y no comprar electrónica de alto valor ni marca dudosa.", timing: "Noche, al final del viaje", status: "VERIFICADO", source: "https://www.discoverhongkong.com/eng/shopping/snag-the-best-bargain-souvenirs-at-hong-kong-s-street-markets.html" },
+  { city: "hongkong", name: "Temple Street Night Market", specialty: "Souvenirs, camisetas, artesanía y accesorios", area: "Jordan / Yau Ma Tei", buy: "Mejor como experiencia de cena y mercado que como destino de tecnología seria.", verify: "Comparar puestos, negociar y no comprar electrónica de alto valor ni marca dudosa.", timing: "Noche del 3 dic; comprar ligero", status: "VERIFICADO", source: "https://www.discoverhongkong.com/eng/shopping/snag-the-best-bargain-souvenirs-at-hong-kong-s-street-markets.html" },
   { city: "macau", name: "Lord Stow's Bakery", specialty: "Tartas de huevo y recuerdos gastronómicos", area: "Coloane / Taipa / Venetian", buy: "Comprar para consumir durante el viaje; la sucursal original de Coloane es la experiencia más distintiva.", verify: "No asumir que pastelería fresca puede entrar a EE. UU.; consumir antes del vuelo o revisar reglas de CBP.", timing: "Durante Macao, no como compra final", status: "VERIFICADO", source: "https://www.lordstow.com/" },
   { city: "zhangjiajie", name: "Wulingyuan · tiendas locales", specialty: "Té, bordados Tujia y recuerdos del parque", area: "Alrededor de la entrada este", buy: "Comprar solo una pieza específica con origen y precio claros; no cargar artesanía genérica durante el resto del viaje.", verify: "No se verificó una tienda única que justifique recomendarla. Comparar y evitar supuestas antigüedades o productos medicinales.", timing: "Última noche en Wulingyuan", status: "VARIABLE", source: "https://us.trip.com/moments/theme/destination-zhangjiajie-23-souvenirs-1005652/" },
 ];
@@ -786,8 +849,8 @@ export const shoppingPlaces: Array<{
 export const luggageRules = [
   { mode: "Korean Air · JFK", rule: "Economy Saver: 1×23 kg; otras Economy hacia/desde Américas: 2×23 kg. Cabina: 1 pieza + objeto personal, 10 kg total.", action: "Revisar la clase tarifaria del billete comprado; no asumir 2 piezas si dice Saver.", source: "https://www.koreanair.com/contents/plan-your-travel/baggage/checked-baggage/free-baggage?hl=en" },
   { mode: "Trenes 12306", rule: "Adulto: 20 kg; cada pieza con suma de dimensiones ≤130 cm. No hay servicio de facturación en HSR.", action: "Cada persona debe poder mover su propia maleta por controles y andenes.", source: "https://www.highspeed.mtr.com.hk/en/guide/carriage-of-luggage.html" },
-  { mode: "China Eastern", rule: "La tabla oficial ofrece 2×23 kg para Economy no branded en ciertas rutas; Basic depende del billete. Cabina máx. 55×40×20 cm.", action: "Leer la franquicia del vuelo HKG→PVG antes de pagar; usar la reserva de equipaje si no está incluida.", source: "https://www.ceair.com/global/en_USD/Announcement/BaggageService/FreeBaggageAllowanceandSpecifications/" },
-  { mode: "Cotai Water Jet", rule: "1 pieza de mano ≤20 kg y 56×36×23 cm; hasta 2 facturadas con reserva antes de las 16:00 del día previo y cargo desde HKD25.", action: "Reservar las 5 maletas al comprar si se elige este ferry.", source: "https://www.cotaiwaterjet.com/ferry-schedule/hongkong-macau-taipa.html" },
+  { mode: "Vuelos internos", rule: "La franquicia cambia por aerolínea y tarifa; una tarifa Basic puede no incluir maleta. Las baterías sueltas no van facturadas.", action: "En PVG/SHA→DYG y SZX→SHA exigir 1 maleta facturada por persona antes de pagar.", source: "https://www.google.com/travel/flights/" },
+  { mode: "TurboJET", rule: "1 pieza de mano ≤20 kg gratis. Maleta estándar facturada ≤20 kg: HKD35 Hong Kong–Macao y MOP/RMB25 Macao–Shekou.", action: "Llegar 45 min antes y facturar las 5 maletas; el servicio cierra 20 min antes.", source: "https://www.turbojet.com.hk/en/routing-sailing-schedule/hong-kong-macau/luggage-services.aspx" },
   { mode: "Baterías / drones", rule: "Baterías de litio sueltas y power banks van solo en cabina; TSA admite normalmente hasta 100 Wh por batería.", action: "Proteger terminales, conservar etiqueta Wh y repartir baterías entre equipajes de mano.", source: "https://www.tsa.gov/travel/security-screening/whatcanibring/items/lithium-batteries-100-watt-hours-or-less-device" },
   { mode: "Compras al volver a EE. UU.", rule: "La exención personal habitual puede ser US$800; los artículos deben declararse y cumplir condiciones.", action: "Guardar recibos, sumar compras por persona y declarar si hay duda.", source: "https://www.cbp.gov/travel/us-citizens/know-before-you-go/know-you-go-traveling-abroad" },
 ];
@@ -810,7 +873,7 @@ export const packages: PackagePreset[] = [
   {
     id: "economy", name: "Presupuesto", tagline: "La ruta completa al menor costo razonable, con habitaciones privadas y días gratuitos bien ubicados.",
     hotelIds: { shanghai: "sh-lucky", zhangjiajie: "zjj-ji-wulingyuan", shenzhen: "sz-hanting-hqb", macau: "mo-grande", hongkong: "hk-the-night" },
-    transportIds: { "sh-zjj": "sh-zjj-train", "zjj-sz": "zjj-sz-train", "sz-mo": "sz-mo-train", "mo-hk": "mo-hk-bus", "hk-sh": "hk-sh-train" },
+    transportIds: { "sh-zjj": "sh-zjj-train", "zjj-hk": "zjj-hk-train", "hk-mo": "hk-mo-bus", "mo-sz": "mo-sz-train", "sz-sh": "sz-sh-train" },
     localIds: { shanghai: "sh-public", zhangjiajie: "zjj-public", shenzhen: "sz-public", macau: "mo-public", hongkong: "hk-public" },
     attractionIds: ["sh-bund", "sh-nanjing", "sh-ferry", "sh-museum-peoples", "sh-peoples-park", "zjj-park", "zjj-yuanjiajie", "zjj-tianzi", "zjj-golden-whip", "zjj-tianmen", "sz-seg", "sz-hqb", "sz-dongmen", "mo-old", "mo-monte-fort", "mo-cotai-resorts", "hk-avenue-stars", "hk-symphony", "hk-star-ferry", "hk-sham-shui-po"],
     foodPerPersonDay: 28, baggageReserve: 350, gain: "Hoteles céntricos de costo bajo, atracciones gratuitas y tren/bus donde el ahorro compensa.", lose: "Más horas de traslado, habitaciones pequeñas y ningún gran show de pago.",
@@ -818,7 +881,7 @@ export const packages: PackagePreset[] = [
   {
     id: "value", name: "Mejor valor", tagline: "Ahorra en el cuarto sin sacrificar ubicación, vuelos útiles ni las experiencias más memorables.",
     hotelIds: { shanghai: "sh-ji-peoples", zhangjiajie: "zjj-wulingyuan-hotel", shenzhen: "sz-maker", macau: "mo-ole", hongkong: "hk-iclub-mongkok" },
-    transportIds: { "sh-zjj": "sh-zjj-flight", "zjj-sz": "zjj-sz-flight", "sz-mo": "sz-mo-ferry", "mo-hk": "mo-hk-turbo", "hk-sh": "hk-sh-flight" },
+    transportIds: { "sh-zjj": "sh-zjj-flight", "zjj-hk": "zjj-hk-train", "hk-mo": "hk-mo-ferry", "mo-sz": "mo-sz-ferry", "sz-sh": "sz-sh-flight" },
     localIds: { shanghai: "sh-mix", zhangjiajie: "zjj-mix", shenzhen: "sz-mix", macau: "mo-mix", hongkong: "hk-mix" },
     attractionIds: ["sh-bund", "sh-yu", "sh-teamlab", "sh-era", "sh-ferry", "sh-lujiazui", "zjj-yuanjiajie", "zjj-bailong", "zjj-tianzi", "zjj-glass", "zjj-tianmen", "sz-seg", "sz-science", "sz-dji", "sz-talent-park", "mo-old", "mo-cotai-resorts", "mo-wynn", "mo-water", "hk-avenue-stars", "hk-peak", "hk-star-ferry", "hk-sham-shui-po", "hk-food-route"],
     foodPerPersonDay: 38, baggageReserve: 350, gain: "Vuelos que recuperan tiempo, hoteles de valor y un show grande sin pagar resorts.", lose: "Menos espacio y se elige una sola experiencia cara por ciudad.",
@@ -826,18 +889,18 @@ export const packages: PackagePreset[] = [
   {
     id: "comfort", name: "Mejor en general", tagline: "La combinación recomendada: ubicaciones fuertes, traslados sensatos y experiencias diferentes en cada ciudad.",
     hotelIds: { shanghai: "sh-golden", zhangjiajie: "zjj-hilton", shenzhen: "sz-huaqiang", macau: "mo-casa", hongkong: "hk-dorsett" },
-    transportIds: { "sh-zjj": "sh-zjj-flight", "zjj-sz": "zjj-sz-flight", "sz-mo": "sz-mo-ferry", "mo-hk": "mo-hk-turbo", "hk-sh": "hk-sh-flight" },
+    transportIds: { "sh-zjj": "sh-zjj-flight", "zjj-hk": "zjj-hk-train", "hk-mo": "hk-mo-ferry", "mo-sz": "mo-sz-ferry", "sz-sh": "sz-sh-flight" },
     localIds: { shanghai: "sh-mix", zhangjiajie: "zjj-private", shenzhen: "sz-mix", macau: "mo-mix", hongkong: "hk-mix" },
     attractionIds: ["sh-bund", "sh-astronomy", "sh-teamlab", "sh-era", "sh-tower", "sh-cruise", "sh-food", "zjj-yuanjiajie", "zjj-bailong", "zjj-tianzi", "zjj-glass", "zjj-tianmen", "zjj-fox-fairy", "sz-seg", "sz-science", "sz-dji", "sz-ping", "sz-seaworld-night", "mo-old", "mo-tower", "mo-water", "mo-teamlab", "mo-wynn", "hk-avenue-stars", "hk-peak", "hk-mplus", "hk-ngong", "hk-star-ferry", "hk-food-route"],
     foodPerPersonDay: 50, baggageReserve: 300, gain: "Hoteles del plan familiar actual, margen de clima en Zhangjiajie y una experiencia protagonista por día.", lose: "No usa resort de lujo en Macao ni coche privado cuando el metro es más rápido.",
   },
   {
-    id: "premium", name: "Cómodo / Premium", tagline: "Más espacio, resorts y chofer en días difíciles, manteniendo metro y ferry cuando realmente ganan tiempo.",
-    hotelIds: { shanghai: "sh-edition", zhangjiajie: "zjj-no5", shenzhen: "sz-langham", macau: "mo-venetian", hongkong: "hk-icon" },
-    transportIds: { "sh-zjj": "sh-zjj-flight", "zjj-sz": "zjj-sz-flight", "sz-mo": "sz-mo-ferry", "mo-hk": "mo-hk-turbo", "hk-sh": "hk-sh-flight" },
-    localIds: { shanghai: "sh-private", zhangjiajie: "zjj-private", shenzhen: "sz-private", macau: "mo-private", hongkong: "hk-private" },
-    attractionIds: ["sh-bund", "sh-astronomy", "sh-teamlab", "sh-era", "sh-tower", "sh-cruise", "sh-museum-east", "sh-food", "zjj-yuanjiajie", "zjj-bailong", "zjj-tianzi", "zjj-glass", "zjj-tianmen", "zjj-fox-fairy", "sz-seg", "sz-science", "sz-dji", "sz-ping", "sz-seaworld-art", "sz-seaworld-night", "mo-old", "mo-cotai-resorts", "mo-water", "mo-teamlab", "mo-resort-pool", "hk-avenue-stars", "hk-peak", "hk-mplus", "hk-ngong", "hk-aqualuna", "hk-food-route", "hk-lkf"],
-    foodPerPersonDay: 70, baggageReserve: 300, gain: "Hoteles de lujo existentes, resort de Macao, traslados privados y el conjunto más amplio de experiencias.", lose: "Costo muy superior; todavía se debe escoger entre días completos incompatibles como Ngong Ping, Ocean Park y Disneyland.",
+    id: "premium", name: "Cómodo / Premium", tagline: "Hoteles de nivel alto y más experiencias, diseñado para mantenerse por debajo de US$3,100 por persona.",
+    hotelIds: { shanghai: "sh-marriott-marquis", zhangjiajie: "zjj-hampton-tianmen", shenzhen: "sz-hilton-futian", macau: "mo-grand-lisboa-palace", hongkong: "hk-royal-plaza" },
+    transportIds: { "sh-zjj": "sh-zjj-flight", "zjj-hk": "zjj-hk-train", "hk-mo": "hk-mo-ferry", "mo-sz": "mo-sz-ferry", "sz-sh": "sz-sh-flight" },
+    localIds: { shanghai: "sh-mix", zhangjiajie: "zjj-mix", shenzhen: "sz-mix", macau: "mo-mix", hongkong: "hk-mix" },
+    attractionIds: ["sh-bund", "sh-yu", "sh-teamlab", "sh-era", "sh-ferry", "sh-lujiazui", "sh-astronomy", "sh-museum-east", "zjj-yuanjiajie", "zjj-bailong", "zjj-tianzi", "zjj-glass", "zjj-tianmen", "zjj-fox-fairy", "sz-seg", "sz-science", "sz-dji", "sz-talent-park", "sz-ping", "sz-seaworld-art", "mo-old", "mo-cotai-resorts", "mo-wynn", "mo-water", "mo-teamlab", "mo-resort-pool", "hk-avenue-stars", "hk-peak", "hk-star-ferry", "hk-sham-shui-po", "hk-food-route", "hk-mplus", "hk-ngong"],
+    foodPerPersonDay: 50, baggageReserve: 300, gain: "Hoteles de nivel alto, vuelos útiles y más experiencias pagas sin romper el límite familiar.", lose: "Usa transporte local mixto en vez de chofer privado diario y evita hoteles ultra lujo que disparaban el total.",
   },
 ];
 
@@ -847,6 +910,7 @@ export const importantSources = [
   { label: "12306 · trenes oficiales", url: "https://www.12306.cn/en/" },
   { label: "MTR · equipaje HSR", url: "https://www.highspeed.mtr.com.hk/en/guide/carriage-of-luggage.html" },
   { label: "TurboJET · horarios", url: "https://www2.turbojet.com.hk/travel-with-us-sea-ferry/" },
+  { label: "Greater Bay Airlines · Zhangjiajie–Hong Kong", url: "https://flights.greaterbay-airlines.com/en-hk/flights-from-zhangjiajie-to-hong-kong" },
   { label: "Cotai Water Jet", url: "https://www.cotaiwaterjet.com/ferry-schedule/hongkong-macau-taipa.html" },
   { label: "China Eastern · equipaje", url: "https://www.ceair.com/global/en_USD/Announcement/BaggageService/FreeBaggageAllowanceandSpecifications/" },
   { label: "Korean Air · equipaje", url: "https://www.koreanair.com/contents/plan-your-travel/baggage/checked-baggage/free-baggage?hl=en" },

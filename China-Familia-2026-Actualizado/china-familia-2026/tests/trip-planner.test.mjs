@@ -36,6 +36,9 @@ test("all selectable records have secure sources and local images", async () => 
     assert.match(record.sourceUrl, /^https:\/\//, `${record.id} source URL`);
     assert.ok(record.image.startsWith("/"), `${record.id} image must be local`);
     await access(path.join(root, "public", record.image));
+    const gallery = record.images ?? [record.image];
+    assert.equal(new Set(gallery).size, gallery.length, `${record.id} repeats an image inside its gallery`);
+    for (const image of gallery) await access(path.join(root, "public", image));
   }
 });
 
@@ -50,6 +53,18 @@ test("packages only reference valid shared-data selections", () => {
     Object.values(preset.transportIds).forEach((id) => assert.ok(optionIds.has(id), `${preset.id}: ${id}`));
     Object.values(preset.localIds).forEach((id) => assert.ok(localIds.has(id), `${preset.id}: ${id}`));
     preset.attractionIds.forEach((id) => assert.ok(attractionIds.has(id), `${preset.id}: ${id}`));
+  }
+});
+
+test("every preconfigured package stays below 3100 dollars per person", () => {
+  for (const preset of data.packages) {
+    const hotelCost = Object.values(preset.hotelIds).reduce((sum, id) => sum + data.hotels.find((hotel) => hotel.id === id).total, 0);
+    const transportCost = Object.entries(preset.transportIds).reduce((sum, [segmentId, optionId]) => sum + data.transportSegments.find((segment) => segment.id === segmentId).options.find((option) => option.id === optionId).groupPrice, 0);
+    const localCost = Object.values(preset.localIds).reduce((sum, id) => sum + data.localPlans.find((plan) => plan.id === id).groupPrice, 0);
+    const attractionCost = preset.attractionIds.reduce((sum, id) => sum + data.attractions.find((item) => item.id === id).pricePerPerson * data.TRAVELERS, 0);
+    const foodCost = preset.foodPerPersonDay * data.TRAVELERS * data.TRIP_DAYS;
+    const total = hotelCost + transportCost + localCost + attractionCost + foodCost + preset.baggageReserve;
+    assert.ok(total / data.TRAVELERS < 3100, `${preset.name} costs ${total / data.TRAVELERS} per person`);
   }
 });
 
